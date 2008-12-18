@@ -11,40 +11,28 @@ as.Formula.default <- function(x, ...) {
   Formula(x)
 }
 
-as.Formula.formula <- function(x, z = NULL, ...) {
-  #Z# todo: remove argument z, instead: apply the 
-  #Z# same logic recursively to all arguments in `...'
+as.Formula.formula <- function(x, ...) {
+
+  z <- list(...)
+  if(length(z) < 1) return(Formula(x)) else z <- z[[1]]
+  #Z# instead of just using the first argument in `...',
+  #Z# use all (vectorized or recursively)
+
   if (length(x) == 3) {
     y <- x[[2]]
     rhs <- x[[3]]
-  }
-  else{
+  } else{
     y <- NULL
     rhs <- x[[2]]
   }
   if (length(z) == 3) zz <- z[[3]] else zz <- z[[2]]
+  #Z# should we throw a warning if there is a left-hand side?
   
   #Z# avoid deparsing and parsing again
-  result <- as.formula(paste(deparse(y)," ~ ",deparse(rhs), "|", deparse(zz)))
-  class(result) <- c("Formula", "formula")
-  result
-}
+  rval <- paste(if(!is.null(y)) deparse(y)," ~ ", deparse(rhs), "|", deparse(zz))
 
-as.Formula.formula <- function(x, ...) {
-  if (length(x) == 3) {
-    y <- x[[2]]
-    rhs <- x[[3]]
-  }
-  else{
-    y <- NULL
-    rhs <- x[[2]]
-  }
-  if (length(z) == 3) zz <- z[[3]] else zz <- z[[2]]
-  result <- as.formula(paste(deparse(y)," ~ ",deparse(rhs), "|", deparse(zz)))
-  class(result) <- c("Formula", "formula")
-  result
+  as.Formula(rval)
 }
-
 
 is.Formula <- function(object)
   inherits(object, "Formula")
