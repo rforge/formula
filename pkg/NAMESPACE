@@ -1,0 +1,10 @@
+export(Formula,as.Formula,is.Formula)
+S3method(as.Formula,default)
+S3method(as.Formula,formula)
+S3method(formula,Formula)
+S3method(terms,Formula)
+S3method(model.frame,Formula)
+S3method(model.matrix,Formula)
+S3method(update,Formula)
+S3method(length,Formula)
+
