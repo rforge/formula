@@ -1,7 +1,12 @@
 Changes in Version 0.x-y
 
   o added CITATION file
-  
+
+  o added a has.intercept function with methods for formula and
+  Formula object
+
+  o change the default value for model.frame.Formula: "both" for a two
+  part-formula and "first" otherwise
 
 Changes in Version 0.1-2
 
