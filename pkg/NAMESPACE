@@ -12,6 +12,7 @@ S3method("model.frame", "Formula")
 S3method("model.matrix", "Formula")
 S3method("update", "Formula")
 S3method("length", "Formula")
+S3method("print", "Formula")
 
 ## methods to as.Formula()
 S3method("as.Formula", "default")

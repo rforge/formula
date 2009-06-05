@@ -1,3 +1,16 @@
+Changes in Version 0.1-4
+
+  o major update, Formula now supports multi-parts and multi-responses
+  formula. For backward compatibility, the part and response arguments
+  may take their previous values ("first", "second" or "both" for part
+  and a logical value for response), although, a numerical vector is much
+  more relevant by now because there may be more than two parts and
+  more than one response.
+
+  o Formula object is now a formula with 3 attributes (rhs, lhs and
+  extra)
+
+
 Changes in Version 0.1-3
 
   o added CITATION file.

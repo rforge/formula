@@ -1,7 +1,59 @@
 Formula <- function(object) {
+
   stopifnot(inherits(object, "formula"))
-  if(!inherits(object, "Formula")) class(object) <- c("Formula", "formula")
-  object
+
+  # extract correctly the right and the left hand side and deal the
+  # case of onepart formula
+  rhs <- switch(as.character(length(object)),
+                "2" = object[[2]],
+                "3" = object[[3]]
+                )
+  lhs <- switch(as.character(length(object)),
+                "2" = NULL,
+                "3" = object[[2]]
+                )
+  # create a list of left-hand side variables (separated by a + in the
+  # formula)
+  lhs.list <- plus2list(lhs)
+  
+  # create a list of the parts on the right-hand side of the formula,
+  # the parts being separated by a |
+  rhs.list <- list()
+  if (length(rhs) > 1 && rhs[[1]] == "|"){
+    while (length(rhs) > 1 && rhs[[1]] == "|"){
+      rhs.list <- c(rhs[[3]], rhs.list)
+      rhs <- rhs[[2]]
+    }
+  }
+  rhs.list <- c(rhs, rhs.list)
+  last.part <- rhs.list[[length(rhs.list)]]
+
+  # in case where the last part of the rhs is separated by a & and not
+  # a | it has a seperate status, called "extra". In this case extract
+  # it and remove it from the last part of the list of rhs elements
+
+  if (length(last.part) > 1 && last.part[[1]] == "&"){
+    extra <- last.part[[3]]
+    last.part <- last.part[[2]]
+
+    extra.list <- list()
+    if (length(extra) == 1) extra.list <- list(extra) else{
+      while (length(extra) > 1  && extra[[1]] == "+"){
+        extra.list <- c(extra[[3]],extra.list)
+        extra <- extra[[2]]
+      }
+      extra.list <- c(extra,extra.list)
+    }
+    for (i in 1:length(extra)){
+      if (length(extra.list[[i]]) == 3){
+        names(extra.list)[i] <- deparse(extra.list[[i]][[2]])
+        extra.list[[i]] <- extra.list[[i]][[3]]
+      }
+    }
+  } else  extra.list <- NULL
+  rhs.list[[length(rhs.list)]] <- last.part
+  structure(object, lhs = lhs.list, rhs = rhs.list, extra = extra.list,
+            class = c("Formula","formula"))
 }
 
 as.Formula <- function(x, ...) UseMethod("as.Formula")
@@ -39,47 +91,78 @@ as.Formula.formula <- function(x, ...) {
 is.Formula <- function(object)
   inherits(object, "Formula")
 
-formula.Formula <- function(x,
-  part = c("first", "second", "both"), response = NULL, ...)
-{
-  xs <- structure(x, class = "formula")
-  part <- match.arg(part)
-  has_response <- attr(terms(xs), "response") == 1L
-  # terms.Formula calls formula.Formula, so we use a copy of class "formula"
-  if (has_response){
-    y <- x[[2]]
-    rhs <- x[[3]]
-    if (is.null(response)) response <- TRUE
+formula.Formula <- function(x, part = "first", response = NULL,
+                            include.extra = FALSE, ...){
+  therhs <- attr(x, "rhs")
+  thelhs <- attr(x, "lhs")
+  extra <- attr(x, "extra")
+  lhs <- response
+  rhs <- part
+
+  if (is.character(rhs)){
+    if (!rhs %in% c("first","second","both","all")) stop("irrelevant value for rhs")
+    rhs <- switch(rhs,
+                  "first" = 1,
+                  "second" = 2,
+                  "both" = c(1,2),
+                  "all" = 1:length(x)
+                  )
+  }
+
+  if (is.character(lhs)){
+    if (lhs == "all"){
+      lhs <- 1:length(attr(x, "lhs"))
+    }
+    else{
+      stop ("irrelevant value for lhs")
+    }
+  }
+  if (is.logical(lhs)) ifelse(lhs, 1, 0)
+  if (is.null(lhs)){
+    # the default behaviour is to select the first response if any
+    if (!is.null(thelhs)) lhs <- thelhs[[1]]
   }
   else{
-    if (is.null(response)) response <- FALSE
-    if (response) stop("one sided formula")
-    y <- NULL
-    rhs <- x[[2]]
+    if (max(lhs) > length(thelhs)) stop(paste("only",length(thelhs),"responses available"))
+    if (length(lhs) == 1){
+      if (lhs == 0){
+        lhs <- NULL
+      }
+      else{
+        lhs <- paste(thelhs[[lhs]])
+      }
+    }
+    else{
+      lhs <- paste(thelhs[lhs],collapse=" + ")
+    }
   }
-  if (length(x) == 1){
-    firstpart <- rhs
-    secondpart <- NULL
-    if (part %in% c("second", "both")) stop("one part formula")
+  
+  if (is.null(rhs)){
+    rhs <- therhs[1]
   }
-  if (length(x) == 2) {
-    firstpart <- rhs[[2]]
-    secondpart <- rhs[[3]]
-    rhs[[1]] <- as.name("+")
+  else{
+    if (length(rhs) == 1 && rhs < 1) stop("at least one part should be selected")
+    if (max(rhs) > length(therhs)) stop(paste("the formula has only", length(therhs), "parts"))
+    rhs <- therhs[rhs]
+    if (length(rhs) > 1){
+      rhs <- paste(rhs,collapse=" + ",sep="")
+    }
+    else{
+      rhs <- paste(deparse(rhs[[1]]))
+    }
   }
-  switch(part,
-    "first" = {
-      if(response) do.call("~", list(y, firstpart))
-        else do.call("~", list(firstpart))
-     },
-    "second" = {
-      if(response) do.call("~", list(y, secondpart))
-        else do.call("~", list(secondpart))
-     },
-    "both" = {
-      if(response) do.call("~", list(y, rhs))
-        else do.call("~", list(rhs))
-     })
+  
+  if (include.extra){
+    extra <- paste(unlist(lapply(extra,deparse)), collapse = "+")
+    rhs <- paste(rhs, extra, sep = "+")
+  }
+  if (is.null(lhs)){
+    result <- as.formula(paste( " ~ ", rhs))
+  }
+  else{
+    result <- as.formula(paste(lhs, " ~ ", rhs))
+  }
+  result
 }
 
 terms.Formula <- function(x, ..., part = "first", response = NULL) {
@@ -124,24 +207,56 @@ update.Formula <- function(object, new,...) {
   as.Formula(result)
 }
 
+update.Formula <- function(object, new,...) {
+  new <- Formula(new)
+  rhs <- mapply(upcallform,
+                attr(object,"rhs"),
+                attr(new, "rhs"),
+                SIMPLIFY = FALSE)
+  lhs.list <- attr(object, "lhs")
+  if (!is.null(lhs.list)){
+    oldlhs <- as.formula(paste("~",paste(attr(object,"lhs"),collapse = " + ")))
+    newlhs <- as.formula(paste("~",paste(attr(new,"lhs"),collapse = " + ")))
+    lhs <- update(oldlhs, newlhs)[[2]]
+    lhs.list <- plus2list(lhs)
+    x <- paste(deparse(lhs)," ~ ",paste(rhs, collapse = " | "))
+  }
+  else{
+    x <- paste(" ~ ", paste(rhs, collapse = " | "))
+  }
+  extra <- attr(object, "extra")
+  if (!is.null(extra)){
+    x <- paste(x, "&", paste(extra,collapse = " + "))
+  }
+  structure(as.formula(x), rhs = rhs, lhs = lhs.list,
+            extra = extra, class = c("Formula", "formula"))
+
+}
+
+upcallform <- function(x, y){
+  x <- formula(paste("~",deparse(x)))
+  y <- formula(paste("~",deparse(y)))
+  update(x,y)[[2]]
+}
+
+plus2list <- function(x){
+  x.list <- list()
+  if (!is.null(x)){
+    x.list <- list()
+    if (length(x) == 1) x.list <- list(x) else{
+      while (length(x) > 1  && x[[1]] == "+"){
+        x.list <- c(x[[3]],x.list)
+        x <- x[[2]]
+      }
+      x.list <- c(x,x.list)
+    }
+  } else x.list <- NULL
+  x.list
+}
+
 
 length.Formula <- function(x) {
-  class(x) <- "formula"
-  if (length(x) == 2) {
-    rhs <- x[[2]]
-  } else {
-    if (length(x) == 3) {
-      rhs <- x[[3]]
-    } else {
-      stop("invalid formula")
-    }
-  }
-  if (length(rhs) > 1 && rhs[[1]] == "|") {
-    lform <- 2
-  } else {
-    lform <- 1
-  }
-  lform
+  length(attr(x, "rhs"))
 }
 
 
@@ -154,6 +269,12 @@ has.intercept.formula <- function(object, ...){
 }
 
 has.intercept.Formula <- function(object, part = "first", ...) {
+  if (length(part) > 1) stop("the has.intercept function is relevant for a single part")
   formula <- formula(object, part = part)
   attr(terms(formula), "intercept") == 1L
+}
+
+print.Formula <- function(x, ...){
+  attributes(x) <- NULL
+  print(x)
 }
