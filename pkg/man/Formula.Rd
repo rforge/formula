@@ -26,8 +26,7 @@
 \usage{
 Formula(object)
 \method{formula}{Formula}(x, part = "first",
-                          response = NULL,
-                          include.extra = FALSE, \dots)
+                          response = NULL, \dots)
 \method{terms}{Formula}(x, \dots, part = "first", response = NULL)
 \method{update}{Formula}(object, new, \dots)
 \method{model.matrix}{Formula}(object, \dots, part = "first")
@@ -60,9 +59,6 @@ has.intercept(object, ...)
     it can be either a logical (\code{FALSE} means no response and
     \code{TRUE} the first one), a character (\code{"all"}) or a numeric
     vector (eg \code{c(1,3)} or \code{0} for no response.}
-
-  \item{include.extra}{should the extra variables be included in the
-    formula ?}
   \item{new}{a formula giving a template which specifies how to update.}
   \item{\dots}{further arguments.}
 }
@@ -76,15 +72,12 @@ has.intercept(object, ...)
   \code{Formula} objects extend the basic \code{formula} objects.
   These extensions  include multi-part formulas
   (\code{y ~ x1 + x2 | u1 + u2 + u3 | v1 + v2}),  multiple response
-  formulas (\code{y1 + y2 ~ x1 + x2 + x3}) and formula with extra
-  variables (\code{y1 ~ x1 + x2 & e1 + e2}). Any combination of these
-  three extensions can be used. 
+  formulas (\code{y1 + y2 ~ x1 + x2 + x3}) 
   
   The \code{Formula} function coerce a formula to a \code{Formula}
   object by modifying the class attribute and adding three attributes :
   \code{rhs} (a list containing the parts of the right-hand side),
-  \code{lhs} (a list containing the responses) and \code{extra} (a list
-  containing the extra variables).
+  \code{lhs} (a list containing the responses).
   
   \code{is.Formula} check whether the argument of the function is &
   \code{Formula} object.
@@ -106,34 +99,40 @@ has.intercept(object, ...)
 
 \examples{
 data("airquality", package = "datasets")
-f <- Ozone ~ Solar.R + Wind | Temp
+f <- Ozone + Solar.R ~ Wind + Day | Temp + Day | Month + Day
 
 # create a Formula object from the formula
 f2 <- Formula(f)
 class(f2)
 
-# examples of updates of the two-parts formula
-update(f2,. ~ . - Wind + Day | . + Month)
-update(f2,. ~ . | . + Month)
-update(f2,. ~ . - Wind + Day | .)
+# update of the Formula
+update(f2,.~.-Day|.+Month|.)
 
-# get the first, second and both parts, with or without the response
-formula(f2, part = "first", response = TRUE)
-formula(f2, part = "second", response = FALSE)
-formula(f2, part = "both")
+# get some parts, with or without the response
+formula(f2) # default behavior first response and first part
+formula(f2, part = 1, response = 1) # same
 
-# model.frame for the first part and for both parts
-head(model.frame(f2, part = "first", data = airquality))
-head(model.frame(f2, part = "both", data = airquality))
+formula(f2, part = c(1, 3))
+formula(f2, part = c(1, 3), response = 1) # same
 
-# model.matrix for the first and the second part
-head(model.matrix(f2, data = airquality, part = "first"))
-head(model.matrix(f2, data = airquality, part = "second"))
+formula(f2, part = 2, response = 1)
+formula(f2, part = "second", response = 1) # same (deprecated)
 
-# note that the sample is not the same due to missing values
-mf <- model.frame(f2, part = "both", data = airquality)
-head(model.matrix(f2, data = mf, part = "first"))
-head(model.matrix(f2, data = mf, part = "second"))
+formula(f2, part = "all", response = 2) # select all parts
+formula(f2, part = "all", response = 0) # a one-sided formula
+formula(f2, part = "all", response = FALSE) # same 
+
+
+# model.frame
+head(model.frame(f2, part = c(1, 3), data = airquality))
+# with the second response
+head(model.frame(f2, part = c(1, 3), response = 2, data = airquality))
+# with all parts and no response
+head(model.frame(f2, part = "all", response = FALSE, data = airquality))
+
+# model.matrix
+head(model.matrix(f2, data = airquality, part = 1))
+head(model.matrix(f2, data = airquality, part = "all"))
 }
 
 \keyword{classes}

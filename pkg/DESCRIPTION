@@ -1,6 +1,6 @@
 Package: Formula
-Version: 0.1-4
-Date: 2009-06-05
+Version: 0.1-5
+Date: 2009-08-21
 Title: Extended Formulas
 Description: Infrastructure for extended formulas (e.g., with two parts on the right hand side).
 Author: Yves Croissant, Achim Zeileis

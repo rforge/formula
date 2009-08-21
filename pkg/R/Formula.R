@@ -28,31 +28,9 @@ Formula <- function(object) {
   rhs.list <- c(rhs, rhs.list)
   last.part <- rhs.list[[length(rhs.list)]]
 
-  # in case where the last part of the rhs is separated by a & and not
-  # a | it has a seperate status, called "extra". In this case extract
-  # it and remove it from the last part of the list of rhs elements
 
-  if (length(last.part) > 1 && last.part[[1]] == "&"){
-    extra <- last.part[[3]]
-    last.part <- last.part[[2]]
-
-    extra.list <- list()
-    if (length(extra) == 1) extra.list <- list(extra) else{
-      while (length(extra) > 1  && extra[[1]] == "+"){
-        extra.list <- c(extra[[3]],extra.list)
-        extra <- extra[[2]]
-      }
-      extra.list <- c(extra,extra.list)
-    }
-    for (i in 1:length(extra)){
-      if (length(extra.list[[i]]) == 3){
-        names(extra.list)[i] <- deparse(extra.list[[i]][[2]])
-        extra.list[[i]] <- extra.list[[i]][[3]]
-      }
-    }
-  } else  extra.list <- NULL
   rhs.list[[length(rhs.list)]] <- last.part
-  structure(object, lhs = lhs.list, rhs = rhs.list, extra = extra.list,
+  structure(object, lhs = lhs.list, rhs = rhs.list,
             class = c("Formula","formula"))
 }
 
@@ -91,11 +69,9 @@ as.Formula.formula <- function(x, ...) {
 is.Formula <- function(object)
   inherits(object, "Formula")
 
-formula.Formula <- function(x, part = "first", response = NULL,
-                            include.extra = FALSE, ...){
+formula.Formula <- function(x, part = "first", response = NULL, ...){
   therhs <- attr(x, "rhs")
   thelhs <- attr(x, "lhs")
-  extra <- attr(x, "extra")
   lhs <- response
   rhs <- part
 
@@ -152,10 +128,6 @@ formula.Formula <- function(x, part = "first", response = NULL,
     }
   }
   
-  if (include.extra){
-    extra <- paste(unlist(lapply(extra,deparse)), collapse = "+")
-    rhs <- paste(rhs, extra, sep = "+")
-  }
   if (is.null(lhs)){
     result <- as.formula(paste( " ~ ", rhs))
   }
@@ -187,6 +159,8 @@ model.matrix.Formula <- function(object, ..., part = "first") {
   
 
 update.Formula <- function(object, new,...) {
+  cat("dans update\n")
+  
   old <- object
   if (!is.Formula(old)) old <- Formula(old)
   if (!is.Formula(new)) new <- Formula(new)
@@ -224,12 +198,8 @@ update.Formula <- function(object, new,...) {
   else{
     x <- paste(" ~ ", paste(rhs, collapse = " | "))
   }
-  extra <- attr(object, "extra")
-  if (!is.null(extra)){
-    x <- paste(x, "&", paste(extra,collapse = " + "))
-  }
   structure(as.formula(x), rhs = rhs, lhs = lhs.list,
-            extra = extra, class = c("Formula", "formula"))
+            class = c("Formula", "formula"))
 
 }
 
