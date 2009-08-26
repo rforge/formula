@@ -74,7 +74,6 @@ formula.Formula <- function(x, part = "first", response = NULL, ...){
   thelhs <- attr(x, "lhs")
   lhs <- response
   rhs <- part
-
   if (is.character(rhs)){
     if (!rhs %in% c("first","second","both","all")) stop("irrelevant value for rhs")
     rhs <- switch(rhs,
@@ -84,7 +83,6 @@ formula.Formula <- function(x, part = "first", response = NULL, ...){
                   "all" = 1:length(x)
                   )
   }
-
   if (is.character(lhs)){
     if (lhs == "all"){
       lhs <- 1:length(attr(x, "lhs"))
@@ -93,10 +91,10 @@ formula.Formula <- function(x, part = "first", response = NULL, ...){
       stop ("irrelevant value for lhs")
     }
   }
-  if (is.logical(lhs)) ifelse(lhs, 1, 0)
+  if (is.logical(lhs)) lhs <- ifelse(lhs, 1, 0)
   if (is.null(lhs)){
     # the default behaviour is to select the first response if any
-    if (!is.null(thelhs)) lhs <- thelhs[[1]]
+    if (!is.null(thelhs)) lhs <- paste(deparse(thelhs[[1]])) else lhs <- 0
   }
   else{
     if (max(lhs) > length(thelhs)) stop(paste("only",length(thelhs),"responses available"))
@@ -105,14 +103,15 @@ formula.Formula <- function(x, part = "first", response = NULL, ...){
         lhs <- NULL
       }
       else{
-        lhs <- paste(thelhs[[lhs]])
+        #YC add a deparse below
+        lhs <- paste(deparse(thelhs[[lhs]]))
       }
     }
     else{
-      lhs <- paste(thelhs[lhs],collapse=" + ")
+      #YC add a deparse below
+      lhs <- paste(deparse(thelhs[lhs]),collapse=" + ")
     }
   }
-  
   if (is.null(rhs)){
     rhs <- therhs[1]
   }
@@ -124,7 +123,8 @@ formula.Formula <- function(x, part = "first", response = NULL, ...){
       rhs <- paste(rhs,collapse=" + ",sep="")
     }
     else{
-      rhs <- paste(deparse(rhs[[1]]))
+      #YC add a collapse = ""
+      rhs <- paste(deparse(rhs[[1]]), collapse = "")
     }
   }
   
@@ -159,8 +159,6 @@ model.matrix.Formula <- function(object, ..., part = "first") {
   
 
 update.Formula <- function(object, new,...) {
-  cat("dans update\n")
-  
   old <- object
   if (!is.Formula(old)) old <- Formula(old)
   if (!is.Formula(new)) new <- Formula(new)
