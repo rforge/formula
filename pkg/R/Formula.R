@@ -2,36 +2,10 @@ Formula <- function(object) {
 
   stopifnot(inherits(object, "formula"))
 
-  # extract correctly the right and the left hand side and deal the
-  # case of onepart formula
-  rhs <- switch(as.character(length(object)),
-                "2" = object[[2]],
-                "3" = object[[3]]
-                )
-  lhs <- switch(as.character(length(object)),
-                "2" = NULL,
-                "3" = object[[2]]
-                )
-  # create a list of left-hand side variables (separated by a + in the
-  # formula)
-  lhs.list <- plus2list(lhs)
-  
-  # create a list of the parts on the right-hand side of the formula,
-  # the parts being separated by a |
-  rhs.list <- list()
-  if (length(rhs) > 1 && rhs[[1]] == "|"){
-    while (length(rhs) > 1 && rhs[[1]] == "|"){
-      rhs.list <- c(rhs[[3]], rhs.list)
-      rhs <- rhs[[2]]
-    }
-  }
-  rhs.list <- c(rhs, rhs.list)
-  last.part <- rhs.list[[length(rhs.list)]]
+  object_split <- split_formula(object)
 
-
-  rhs.list[[length(rhs.list)]] <- last.part
-  structure(object, lhs = lhs.list, rhs = rhs.list,
-            class = c("Formula","formula"))
+  structure(object, lhs = object_split$lhs, rhs = object_split$rhs,
+    class = c("Formula", "formula"))
 }
 
 as.Formula <- function(x, ...) UseMethod("as.Formula")
@@ -43,204 +17,230 @@ as.Formula.default <- function(x, ...) {
 
 as.Formula.formula <- function(x, ...) {
 
-  z <- list(...)
-  if(length(z) < 1) return(Formula(x)) else z <- z[[1]]
-  #Z# instead of just using the first argument in `...',
-  #Z# use all (vectorized or recursively)
-
-  if (length(x) == 3) {
-    y <- x[[2]]
-    rhs <- x[[3]]
-  } else{
-    y <- NULL
-    rhs <- x[[2]]
-  }
-  zz <- if (length(z) == 3) z[[3]] else z[[2]]
-  #Z# should we throw a warning if there is a left-hand side?
+  ## combine all arguments to formula list
+  x <- c(list(x), list(...))
+  x <- lapply(x, as.formula)  
   
-  #Z# avoid deparsing and parsing again
-  rval <- paste(if(!is.null(y)) paste(deparse(y), collapse = ""),
-    " ~ ", paste(deparse(rhs), collapse = ""),
-    "|", paste(deparse(zz), collapse = ""))
+  ## split all 
+  x_split <- lapply(x, split_formula)
+  x_lhs <- do.call("c", lapply(x_split, "[[", "lhs"))
+  x_rhs <- do.call("c", lapply(x_split, "[[", "rhs"))
 
-  as.Formula(rval)
+  ## recombine
+  x_all <- paste_formula(x_lhs, x_rhs)
+  
+  ## create formula
+  ## (we have everything to do this by hand, but for encapsulating code
+  ## call Formula() again...which splits again)
+  Formula(x_all)
 }
 
 is.Formula <- function(object)
   inherits(object, "Formula")
 
-formula.Formula <- function(x, part = "first", response = NULL,
-  ...)
+formula.Formula <- function(x, lhs = NULL, rhs = NULL, collapse = FALSE,
+  drop = TRUE, part = NULL, response = NULL, ...)
 {
-  therhs <- attr(x, "rhs")
-  thelhs <- attr(x, "lhs")
+  ## FIXME: I would prefer to deprecate part/response now (rather than later)
 
-  lhs <- response
-  rhs <- part
-
-  if (is.character(rhs)) {
-    if (!rhs %in% c("first", "second", "both", "all")) stop("irrelevant value for rhs")
-    rhs <- switch(rhs,
-      "first" = 1,
-      "second" = 2,
-      "both" = c(1,2),
-      "all" = 1:length(x)
-    )
+  ## backward compatibility for part
+  if(!missing(part)) {
+    if(is.character(part)) {
+      if(!part %in% c("first", "second", "both", "all")) stop("irrelevant value for part")
+      part <- switch(part,
+        "first" = 1,
+        "second" = 2,
+        "both" = c(1, 2),
+        "all" = 1:length(attr(x, "rhs"))
+      )
+    }
+    rhs <- part
   }
   
-  if (is.character(lhs)) {
-    if (lhs == "all") {
-      lhs <- 1:length(attr(x, "lhs"))
-    } else {
-      stop ("irrelevant value for lhs")
-    }
-  }  
-  if (is.logical(lhs)) lhs <- ifelse(lhs, 1, 0)
-  if (is.null(lhs)) {
-    # the default behaviour is to select the first response if any
-    lhs <- if(!is.null(thelhs)) paste(deparse(thelhs[[1]])) else 0
-  } else {
-    if (max(lhs) > length(thelhs)) stop(paste("only", length(thelhs), "responses available"))
-    if (length(lhs) == 1) {
-      if (lhs == 0) {
-        lhs <- NULL
-      } else {
-        #YC add a deparse below
-        lhs <- paste(deparse(thelhs[[lhs]]))
-      }
-    } else {
-      #YC add a deparse below
-      lhs <- paste(deparse(thelhs[lhs]),collapse=" + ")
-    }
-  }
-  if (is.null(rhs)) {
-    rhs <- therhs[1]
-  } else {
-    if (length(rhs) == 1 && rhs < 1) stop("at least one part should be selected")
-    if (max(rhs) > length(therhs)) stop(paste("the formula has only", length(therhs), "parts"))
-    rhs <- therhs[rhs]
-    if (length(rhs) > 1) {
-      rhs <- paste(rhs, collapse = " + ", sep = "")
-    } else {
-      #YC add a collapse = ""
-      rhs <- paste(deparse(rhs[[1]]), collapse = "")
-    }
-  }
-  
-  if (is.null(lhs)) {
-    result <- as.formula(paste(" ~ ", rhs))
-  } else {
-    result <- as.formula(paste(lhs, " ~ ", rhs))
-  }
-  result
+  ## backward compatibility for response
+  if(!missing(response)) lhs <- as.numeric(response)
+
+  ## default: keep all parts (NOTE: changed from previous version!)
+  if(is.null(lhs)) lhs <- 1:length(attr(x, "lhs"))
+  if(is.null(rhs)) rhs <- 1:length(attr(x, "rhs"))
+
+  ## collapse: keep parts separated by "|" or collapse with "+"
+  collapse <- rep(as.logical(collapse), length.out = 2)
+
+  rval <- paste_formula(attr(x, "lhs")[lhs], attr(x, "rhs")[rhs],
+    lsep = ifelse(collapse[1], "+", "|"),
+    rsep = ifelse(collapse[2], "+", "|"))
+
+  ## reconvert to Formula if desired
+  if(!drop) rval <- Formula(rval)
+
+  return(rval)
 }
 
-terms.Formula <- function(x, ..., part = "first", response = NULL) {
-  if(is.null(response))
-    response <- attr(terms(structure(x, class = "formula")), "response") == 1L
-  form <- formula(x, part = part, response = response)
+terms.Formula <- function(x, lhs = NULL, rhs = NULL, ...) {
+  form <- formula(x, lhs = lhs, rhs = rhs)
+  Form <- Formula(form)
+  if(length(attr(Form, "lhs")) > 1 | length(attr(Form, "rhs")) > 1) form <- Form
   terms(form, ...)
 }
 
-model.frame.Formula <- function(formula, ..., part = NULL, response = NULL) {
-  if (is.null(response)) response <- attr(terms(formula), "response") == 1L
-  if (is.null(part)) part <- ifelse(length(formula) == 2L, "both", "first")
-  form <- formula(formula, part = part, response = response)
-  model.frame(form, ...)
+model.frame.Formula <- function(formula, lhs = NULL, rhs = NULL, ...) {
+  form <- formula(formula, lhs = lhs, rhs = rhs)
+  Form <- Formula(form)
+  if(length(attr(Form, "lhs")) > 1 | length(attr(Form, "rhs")) > 1 |
+    any(sapply(attr(Form, "lhs"), length) > 1))
+  {
+    ## workaround to keep "|" from being interpreted as logical OR
+    ## and to keep lhs from being collapsed into a single variable
+    form2 <- paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")
+    model.frame(form2, ...)  
+  } else {
+    model.frame(form, ...)
+  }
 }
 
-model.matrix.Formula <- function(object, ..., part = "first") {
-  form <- formula(object, part = part)
+model.matrix.Formula <- function(object, rhs = 1, ...) {
+  form <- formula(object, rhs = rhs, collapse = c(FALSE, TRUE))
   model.matrix(form, ...)
-  #Z# Should we call model.frame(form, ...) first to avoid missingness problems?
-}
-  
-
-update.Formula <- function(object, new,...) {
-  old <- object
-  if (!is.Formula(old)) old <- Formula(old)
-  if (!is.Formula(new)) new <- Formula(new)
-
-  old.first <- formula(old, part = "first", response = FALSE)
-  old.second <- formula(old, part = "second", response = FALSE)
-
-  new.first <- formula(new, part = "first", response = FALSE)
-  new.second <- formula(new, part = "second", response = FALSE)
-
-  new.first <- update(old.first, new.first)
-  new.second <- update(old.second, new.second)
-  
-  #Z# avoid deparsing and parsing again
-  result <- paste(paste(deparse(old[[2]]), collapse = ""),
-    "~", paste(deparse(new.first[[2]]), collapse = ""),
-    "|", paste(deparse(new.second[[2]]), collapse = ""))
-  as.Formula(result)
 }
 
 update.Formula <- function(object, new,...) {
+
   new <- Formula(new)
-  rhs <- mapply(upcallform,
-                attr(object,"rhs"),
-                attr(new, "rhs"),
-                SIMPLIFY = FALSE)
-  lhs.list <- attr(object, "lhs")
-  if (!is.null(lhs.list)){
-    oldlhs <- as.formula(paste("~",paste(attr(object,"lhs"),collapse = " + ")))
-    newlhs <- as.formula(paste("~",paste(attr(new,"lhs"),collapse = " + ")))
-    lhs <- update(oldlhs, newlhs)[[2]]
-    lhs.list <- plus2list(lhs)
-    x <- paste(deparse(lhs)," ~ ",paste(rhs, collapse = " | "))
+  
+  ## extract all building blocks
+  o_lhs <- attr(object, "lhs")
+  o_rhs <- attr(object, "rhs")
+  n_lhs <- attr(new, "lhs")
+  n_rhs <- attr(new, "rhs")
+  lhs <- rep(list(NULL), length = max(length(o_lhs), length(n_lhs)))
+  rhs <- rep(list(NULL), length = max(length(o_rhs), length(n_rhs)))
+
+  ## convenience function for updating components
+  update_components <- function(x, y) {
+    xf <- yf <- ~ .
+    xf[[2]] <- x
+    yf[[2]] <- y
+    update(xf, yf)[[2]]
   }
-  else{
-    x <- paste(" ~ ", paste(rhs, collapse = " | "))
+  
+  for(i in 1:length(lhs)) {
+    lhs[[i]] <- if(length(o_lhs) < i) n_lhs[[i]]
+      else if(length(n_lhs) < i) o_lhs[[i]]
+      else update_components(o_lhs[[i]], n_lhs[[i]])
   }
-  structure(as.formula(x), rhs = rhs, lhs = lhs.list,
-            class = c("Formula", "formula"))
 
+  for(i in 1:length(rhs)) {
+    rhs[[i]] <- if(length(o_rhs) < i) n_rhs[[i]]
+      else if(length(n_rhs) < i) o_rhs[[i]]
+      else update_components(o_rhs[[i]], n_rhs[[i]])
+  }
+
+  ## recombine
+  rval <- paste_formula(lhs, rhs)
+  
+  ## create formula
+  ## (we have everything to do this by hand, but for encapsulating code
+  ## call Formula() again...which splits again)
+  Formula(rval)  
 }
-
-upcallform <- function(x, y){
-  x <- formula(paste("~",deparse(x)))
-  y <- formula(paste("~",deparse(y)))
-  update(x,y)[[2]]
-}
-
-plus2list <- function(x){
-  x.list <- list()
-  if (!is.null(x)){
-    x.list <- list()
-    if (length(x) == 1) x.list <- list(x) else{
-      while (length(x) > 1  && x[[1]] == "+"){
-        x.list <- c(x[[3]],x.list)
-        x <- x[[2]]
-      }
-      x.list <- c(x,x.list)
-    }
-  } else x.list <- NULL
-  x.list
-}
-
 
 length.Formula <- function(x) {
-  length(attr(x, "rhs"))
+  ## NOTE: return length of both sides, not only rhs
+  c(length(attr(x, "lhs")), length(attr(x, "rhs")))
 }
-
 
 has.intercept <- function(object, ...) {
   UseMethod("has.intercept")
 }
 
-has.intercept.formula <- function(object, ...){
+has.intercept.formula <- function(object, ...) {
   attr(terms(object), "intercept") == 1L
 }
 
-has.intercept.Formula <- function(object, part = "first", ...) {
-  if (length(part) > 1) stop("the has.intercept function is relevant for a single part")
-  formula <- formula(object, part = part)
-  attr(terms(formula), "intercept") == 1L
+has.intercept.Formula <- function(object, rhs = NULL, ...) {
+  ## NOTE: return a logical vector of the necessary length
+  ## (which might be > 1)
+  if(is.null(rhs)) rhs <- 1:length(attr(object, "rhs"))
+  sapply(rhs, function(x) has.intercept(formula(object, lhs = 0, rhs = x)))
 }
 
-print.Formula <- function(x, ...){
-  attributes(x) <- NULL
-  print(x)
+print.Formula <- function(x, ...) {
+  ## we could avoid calling formula() by computing on the internal
+  ## structure attr(x, "rhs") <- attr(x, "lhs") <- NULL
+  ## but this is probably cleaner...
+  print(formula(x))
+  invisible(x)
+}
+
+
+
+## convenience tools #################################################
+
+## split formulas
+split_formula <- function(f) {
+
+  stopifnot(inherits(f, "formula"))
+
+  rhs <- if(length(f) > 2) f[[3]] else f[[2]]
+  lhs <- if(length(f) > 2) f[[2]] else NULL
+
+  extract_parts <- function(x, sep = "|") {
+    if(is.null(x)) return(NULL)
+    
+    rval <- list()
+    if(length(x) > 1 && x[[1]] == sep) {
+      while(length(x) > 1 && x[[1]] == sep) {
+        rval <- c(x[[3]], rval)
+        x <- x[[2]]
+      }
+    }
+    return(c(x, rval))
+  }
+
+  list(lhs = extract_parts(lhs), rhs = extract_parts(rhs))
+}
+
+## reassemble formulas
+paste_formula <- function(lhs, rhs, lsep = "|", rsep = "|") {
+
+  ## combine (parts of) formulas
+  c_formula <- function(f1, f2, sep = "~") {
+
+    stopifnot(length(sep) == 1, nchar(sep) == 1,
+      sep %in% c("~", "+", "|", "&"))
+
+    if(sep == "~") {
+      rval <- . ~ .
+      rval[[3]] <- f2    
+      rval[[2]] <- f1
+    } else {
+      rval <- as.formula(paste(". ~ .", sep, "."))
+      rval[[3]][[3]] <- f2
+      rval[[3]][[2]] <- f1
+      rval <- rval[[3]]
+    }
+  
+    return(rval)
+  }
+
+  stopifnot(all(nchar(lsep) == 1), all(lsep %in% c("+", "|", "&")))
+  stopifnot(all(nchar(rsep) == 1), all(rsep %in% c("+", "|", "&")))
+  
+  if(length(lhs) > 1) lsep <- rep(lsep, length.out = length(lhs) - 1)
+  if(length(rhs) > 1) rsep <- rep(rsep, length.out = length(rhs) - 1)
+
+  if(!is.list(lhs)) lhs <- list(lhs)
+  if(!is.list(rhs)) rhs <- list(rhs)
+
+  lval <- if(length(lhs) > 0) lhs[[1]] else NULL
+  if(length(lhs) > 1) {
+    for(i in 2:length(lhs)) lval <- c_formula(lval, lhs[[i]], sep = lsep[[i-1]])
+  }
+  rval <- if(length(rhs) > 0) rhs[[1]] else 0 ## FIXME: Is there something better?
+  if(length(rhs) > 1) {
+    for(i in 2:length(rhs)) rval <- c_formula(rval, rhs[[i]], sep = rsep[[i-1]])
+  }
+
+  c_formula(lval, rval, sep = "~")
 }
