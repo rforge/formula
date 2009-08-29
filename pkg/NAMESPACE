@@ -18,6 +18,6 @@ S3method("print", "Formula")
 S3method("as.Formula", "default")
 S3method("as.Formula", "formula")
 
-## methods to as.Formula()
+## methods to has.intercept()
 S3method("has.intercept", "formula")
 S3method("has.intercept", "Formula")

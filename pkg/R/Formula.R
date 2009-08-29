@@ -69,69 +69,67 @@ as.Formula.formula <- function(x, ...) {
 is.Formula <- function(object)
   inherits(object, "Formula")
 
-formula.Formula <- function(x, part = "first", response = NULL, ...){
+formula.Formula <- function(x, part = "first", response = NULL,
+  ...)
+{
   therhs <- attr(x, "rhs")
   thelhs <- attr(x, "lhs")
+
   lhs <- response
   rhs <- part
-  if (is.character(rhs)){
-    if (!rhs %in% c("first","second","both","all")) stop("irrelevant value for rhs")
+
+  if (is.character(rhs)) {
+    if (!rhs %in% c("first", "second", "both", "all")) stop("irrelevant value for rhs")
     rhs <- switch(rhs,
-                  "first" = 1,
-                  "second" = 2,
-                  "both" = c(1,2),
-                  "all" = 1:length(x)
-                  )
+      "first" = 1,
+      "second" = 2,
+      "both" = c(1,2),
+      "all" = 1:length(x)
+    )
   }
-  if (is.character(lhs)){
-    if (lhs == "all"){
+  
+  if (is.character(lhs)) {
+    if (lhs == "all") {
       lhs <- 1:length(attr(x, "lhs"))
-    }
-    else{
+    } else {
       stop ("irrelevant value for lhs")
     }
-  }
+  }  
   if (is.logical(lhs)) lhs <- ifelse(lhs, 1, 0)
-  if (is.null(lhs)){
+  if (is.null(lhs)) {
     # the default behaviour is to select the first response if any
-    if (!is.null(thelhs)) lhs <- paste(deparse(thelhs[[1]])) else lhs <- 0
-  }
-  else{
-    if (max(lhs) > length(thelhs)) stop(paste("only",length(thelhs),"responses available"))
-    if (length(lhs) == 1){
-      if (lhs == 0){
+    lhs <- if(!is.null(thelhs)) paste(deparse(thelhs[[1]])) else 0
+  } else {
+    if (max(lhs) > length(thelhs)) stop(paste("only", length(thelhs), "responses available"))
+    if (length(lhs) == 1) {
+      if (lhs == 0) {
         lhs <- NULL
-      }
-      else{
+      } else {
         #YC add a deparse below
         lhs <- paste(deparse(thelhs[[lhs]]))
       }
-    }
-    else{
+    } else {
       #YC add a deparse below
       lhs <- paste(deparse(thelhs[lhs]),collapse=" + ")
     }
   }
-  if (is.null(rhs)){
+  if (is.null(rhs)) {
     rhs <- therhs[1]
-  }
-  else{
+  } else {
     if (length(rhs) == 1 && rhs < 1) stop("at least one part should be selected")
     if (max(rhs) > length(therhs)) stop(paste("the formula has only", length(therhs), "parts"))
     rhs <- therhs[rhs]
-    if (length(rhs) > 1){
-      rhs <- paste(rhs,collapse=" + ",sep="")
-    }
-    else{
+    if (length(rhs) > 1) {
+      rhs <- paste(rhs, collapse = " + ", sep = "")
+    } else {
       #YC add a collapse = ""
       rhs <- paste(deparse(rhs[[1]]), collapse = "")
     }
   }
   
-  if (is.null(lhs)){
-    result <- as.formula(paste( " ~ ", rhs))
-  }
-  else{
+  if (is.null(lhs)) {
+    result <- as.formula(paste(" ~ ", rhs))
+  } else {
     result <- as.formula(paste(lhs, " ~ ", rhs))
   }
   result
