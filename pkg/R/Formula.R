@@ -39,27 +39,8 @@ is.Formula <- function(object)
   inherits(object, "Formula")
 
 formula.Formula <- function(x, lhs = NULL, rhs = NULL, collapse = FALSE,
-  drop = TRUE, part = NULL, response = NULL, ...)
+  drop = TRUE, ...)
 {
-  ## FIXME: I would prefer to deprecate part/response now (rather than later)
-
-  ## backward compatibility for part
-  if(!missing(part)) {
-    if(is.character(part)) {
-      if(!part %in% c("first", "second", "both", "all")) stop("irrelevant value for part")
-      part <- switch(part,
-        "first" = 1,
-        "second" = 2,
-        "both" = c(1, 2),
-        "all" = 1:length(attr(x, "rhs"))
-      )
-    }
-    rhs <- part
-  }
-  
-  ## backward compatibility for response
-  if(!missing(response)) lhs <- as.numeric(response)
-
   ## default: keep all parts (NOTE: changed from previous version!)
   if(is.null(lhs)) lhs <- 1:length(attr(x, "lhs"))
   if(is.null(rhs)) rhs <- 1:length(attr(x, "rhs"))
@@ -77,30 +58,44 @@ formula.Formula <- function(x, lhs = NULL, rhs = NULL, collapse = FALSE,
   return(rval)
 }
 
-terms.Formula <- function(x, lhs = NULL, rhs = NULL, ...) {
+terms.Formula <- function(x, ..., lhs = NULL, rhs = NULL) {
   form <- formula(x, lhs = lhs, rhs = rhs)
   Form <- Formula(form)
-  if(length(attr(Form, "lhs")) > 1 | length(attr(Form, "rhs")) > 1) form <- Form
-  terms(form, ...)
-}
 
-model.frame.Formula <- function(formula, lhs = NULL, rhs = NULL, ...) {
-  form <- formula(formula, lhs = lhs, rhs = rhs)
-  Form <- Formula(form)
+  ## workaround to keep "|" from being interpreted as logical OR
+  ## and to keep lhs from being collapsed into a single variable
   if(length(attr(Form, "lhs")) > 1 | length(attr(Form, "rhs")) > 1 |
     any(sapply(attr(Form, "lhs"), length) > 1))
   {
-    ## workaround to keep "|" from being interpreted as logical OR
-    ## and to keep lhs from being collapsed into a single variable
-    form2 <- paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")
-    model.frame(form2, ...)  
-  } else {
-    model.frame(form, ...)
+    form <- if(length(attr(Form, "lhs")) > 1 | any(sapply(attr(Form, "lhs"), length) > 1))
+      paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")
+    else
+      paste_formula(attr(Form, "lhs"), attr(Form, "rhs"), rsep = "+")
   }
+
+  terms(form, ...)
 }
 
-model.matrix.Formula <- function(object, rhs = 1, ...) {
-  form <- formula(object, rhs = rhs, collapse = c(FALSE, TRUE))
+model.frame.Formula <- function(formula, ..., lhs = NULL, rhs = NULL) {
+  form <- formula(formula, lhs = lhs, rhs = rhs)
+  Form <- Formula(form)
+
+  ## workaround to keep "|" from being interpreted as logical OR
+  ## and to keep lhs from being collapsed into a single variable
+  if(length(attr(Form, "lhs")) > 1 | length(attr(Form, "rhs")) > 1 |
+    any(sapply(attr(Form, "lhs"), length) > 1))
+  {
+    form <- if(length(attr(Form, "lhs")) > 1 | any(sapply(attr(Form, "lhs"), length) > 1))
+      paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")
+    else
+      paste_formula(attr(Form, "lhs"), attr(Form, "rhs"), rsep = "+")
+  }
+
+  model.frame(form, ...)
+}
+
+model.matrix.Formula <- function(object, ..., lhs = NULL, rhs = 1) {
+  form <- formula(object, lhs = lhs, rhs = rhs, collapse = c(FALSE, TRUE))
   model.matrix(form, ...)
 }
 
