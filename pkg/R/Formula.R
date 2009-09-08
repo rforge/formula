@@ -15,6 +15,10 @@ as.Formula.default <- function(x, ...) {
   Formula(x)
 }
 
+as.Formula.Formula <- function(x, ...) {
+  x
+}
+
 as.Formula.formula <- function(x, ...) {
 
   ## combine all arguments to formula list
@@ -147,6 +151,10 @@ length.Formula <- function(x) {
 
 has.intercept <- function(object, ...) {
   UseMethod("has.intercept")
+}
+
+has.intercept.default <- function(object, ...) {
+  has.intercept(formula(object), ...)
 }
 
 has.intercept.formula <- function(object, ...) {

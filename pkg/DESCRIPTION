@@ -1,8 +1,9 @@
 Package: Formula
-Version: 0.1-5
-Date: 2009-08-21
+Version: 0.2-0
+Date: 2009-09-09
 Title: Extended Formulas
-Description: Infrastructure for extended formulas (e.g., with two parts on the right hand side).
+Description: Infrastructure for extended formulas with multiple parts on the
+             right-hand side and/or multiple responses on the left-hand side.
 Author: Yves Croissant, Achim Zeileis
 Maintainer: Yves Croissant <yves.croissant@let.ish-lyon.cnrs.fr>
 Depends: R (>= 2.0.0)

@@ -1,9 +1,9 @@
 export(
-       "Formula",
-       "as.Formula",
-       "is.Formula",
-       "has.intercept"
-       )
+  "Formula",
+  "as.Formula",
+  "is.Formula",
+  "has.intercept"
+)
 
 ## methods for class "Formula"
 S3method("formula", "Formula")
@@ -17,7 +17,9 @@ S3method("print", "Formula")
 ## methods to as.Formula()
 S3method("as.Formula", "default")
 S3method("as.Formula", "formula")
+S3method("as.Formula", "Formula")
 
 ## methods to has.intercept()
+S3method("has.intercept", "default")
 S3method("has.intercept", "formula")
 S3method("has.intercept", "Formula")
