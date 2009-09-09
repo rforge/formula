@@ -80,7 +80,9 @@ terms.Formula <- function(x, ..., lhs = NULL, rhs = NULL) {
   terms(form, ...)
 }
 
-model.frame.Formula <- function(formula, ..., lhs = NULL, rhs = NULL) {
+model.frame.Formula <- function(formula, data = NULL, ...,
+  lhs = NULL, rhs = NULL)
+{
   form <- formula(formula, lhs = lhs, rhs = rhs)
   Form <- Formula(form)
 
@@ -95,12 +97,14 @@ model.frame.Formula <- function(formula, ..., lhs = NULL, rhs = NULL) {
       paste_formula(attr(Form, "lhs"), attr(Form, "rhs"), rsep = "+")
   }
 
-  model.frame(form, ...)
+  model.frame(form, data = data, ...)
 }
 
-model.matrix.Formula <- function(object, ..., lhs = NULL, rhs = 1) {
+model.matrix.Formula <- function(object, data = environment(object), ...,
+  lhs = NULL, rhs = 1)
+{
   form <- formula(object, lhs = lhs, rhs = rhs, collapse = c(FALSE, TRUE))
-  model.matrix(form, ...)
+  model.matrix(form, data = data, ...)
 }
 
 update.Formula <- function(object, new,...) {

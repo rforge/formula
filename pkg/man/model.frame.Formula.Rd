@@ -12,13 +12,18 @@
 }
 
 \usage{
-\method{model.frame}{Formula}(formula, \dots, lhs = NULL, rhs = NULL)
-\method{model.matrix}{Formula}(object, \dots, lhs = NULL, rhs = 1)
-\method{terms}{Formula}(x, \dots, lhs = NULL, rhs = NULL)
+\method{model.frame}{Formula}(formula, data = NULL, \dots,
+  lhs = NULL, rhs = NULL)
+\method{model.matrix}{Formula}(object, data = environment(object), \dots,
+  lhs = NULL, rhs = 1)
+\method{terms}{Formula}(x, \dots,
+  lhs = NULL, rhs = NULL)
 }
 
 \arguments{
   \item{formula, object, x}{an object of class \code{Formula}.}
+  \item{data}{a data.frame, list or environment containing the variables in
+    \code{formula}.}
   \item{lhs, rhs}{indexes specifying which elements of the left- and
     right-hand side, respectively, should be employed. \code{NULL}
     corresponds to all parts, \code{0} to none.}
@@ -96,8 +101,11 @@ model.frame(F2, data = dat, lhs = 2, rhs = 0)
 model.matrix(F2, data = dat, rhs = 1)
 model.matrix(F2, data = dat, rhs = 2)
 model.matrix(F2, data = dat, rhs = 3)
-## to use 'mf2' instead of 'dat' set:
-## attr(mf2, "terms") <- NULL
+
+## alternatively use terms with pre-processed model.frame
+model.matrix(terms(F2, lhs = 0, rhs = 1), data = mf2)
+model.matrix(terms(F2, lhs = 0, rhs = 2), data = mf2)
+model.matrix(terms(F2, lhs = 0, rhs = 3), data = mf2)
 }
 
 \keyword{models}
