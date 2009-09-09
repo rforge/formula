@@ -46,7 +46,8 @@
   is only a single response on the LHS, then it is kept on the LHS.
   Otherwise all parts of the formula are collapsed on the RHS (because \code{formula}
   objects can not have multiple responses). Hence, for multi-response \code{Formula}
-  objects, the (non-generic) \code{\link[stats:model.extract]{model.response}} does not work.
+  objects, the (non-generic) \code{\link[stats:model.extract]{model.response}} does
+  not give the correct results.
 }
 
 \seealso{\code{\link{Formula}},  \code{\link[stats]{model.frame}},
@@ -85,7 +86,7 @@ model.matrix(F1, data = dat, rhs = 2)
 #########################################
 
 ## set up Formula
-F2 <- Formula(y1 | y2 + y3 ~ x1 + I(x2^2) | 0 + log(x1) | x3 / x4)
+F2 <- Formula(y1 + y2 | y3 ~ x1 + I(x2^2) | 0 + log(x1) | x3 / x4)
 length(F2)
 
 ## set up full model frame
@@ -95,7 +96,7 @@ mf2
 ## extract responses
 model.frame(F2, data = dat, lhs = 1, rhs = 0)
 model.frame(F2, data = dat, lhs = 2, rhs = 0)
-## model.response(mf2) does not work!
+## model.response(mf2) does not give correct results!
 
 ## extract model matrices
 model.matrix(F2, data = dat, rhs = 1)
