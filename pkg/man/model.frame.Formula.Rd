@@ -54,50 +54,50 @@ dat <- as.data.frame(matrix(round(rnorm(21), digits = 2), ncol = 7))
 colnames(dat) <- c("y1", "y2", "y3", "x1", "x2", "x3", "x4")
 for(i in 6:7) dat[[i]] <- factor(dat[[i]] > 0, labels = c("a", "b"))
 
-#########################################
-## multiple responses and multiple RHS ##
-#########################################
-
-## set up Formula
-f <- Formula(y1 | y2 + y3 ~ x1 + I(x2^2) | 0 + log(x1) | x3 / x4)
-length(f)
-
-## set up full model frame
-mf <- model.frame(f, data = dat)
-mf
-
-## extract responses
-model.frame(f, data = dat, lhs = 1, rhs = 0)
-model.frame(f, data = dat, lhs = 2, rhs = 0)
-## model.response(mf) does not work!
-
-## extract model matrices
-model.matrix(f, data = dat, rhs = 1)
-model.matrix(f, data = dat, rhs = 2)
-model.matrix(f, data = dat, rhs = 3)
-## to use 'mf' instead of 'dat' set:
-## attr(mf, "terms") <- NULL
-
 ######################################
 ## single response and two-part RHS ##
 ######################################
 
 ## single response with two-part RHS
-f2 <- Formula(y1 ~ x1 + x2 | log(x1))
-length(f2)
+F1 <- Formula(y1 ~ x1 + x2 | log(x1))
+length(F1)
 
 ## set up model frame
-mf2 <- model.frame(f2, data = dat)
-mf2
+mf1 <- model.frame(F1, data = dat)
+mf1
 
 ## extract single response
-model.frame(f2, data = dat, rhs = 0)[,1]
-model.response(mf2)
+model.frame(F1, data = dat, rhs = 0)[,1]
+model.response(mf1)
 ## model.response() works as usual
 
 ## extract model matrices
-model.matrix(f2, data = dat, rhs = 1)
-model.matrix(f2, data = dat, rhs = 2)
+model.matrix(F1, data = dat, rhs = 1)
+model.matrix(F1, data = dat, rhs = 2)
+
+#########################################
+## multiple responses and multiple RHS ##
+#########################################
+
+## set up Formula
+F2 <- Formula(y1 | y2 + y3 ~ x1 + I(x2^2) | 0 + log(x1) | x3 / x4)
+length(F2)
+
+## set up full model frame
+mf2 <- model.frame(F2, data = dat)
+mf2
+
+## extract responses
+model.frame(F2, data = dat, lhs = 1, rhs = 0)
+model.frame(F2, data = dat, lhs = 2, rhs = 0)
+## model.response(mf2) does not work!
+
+## extract model matrices
+model.matrix(F2, data = dat, rhs = 1)
+model.matrix(F2, data = dat, rhs = 2)
+model.matrix(F2, data = dat, rhs = 3)
+## to use 'mf2' instead of 'dat' set:
+## attr(mf2, "terms") <- NULL
 }
 
 \keyword{models}
