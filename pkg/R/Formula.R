@@ -63,40 +63,14 @@ formula.Formula <- function(x, lhs = NULL, rhs = NULL, collapse = FALSE,
 }
 
 terms.Formula <- function(x, ..., lhs = NULL, rhs = NULL) {
-  form <- formula(x, lhs = lhs, rhs = rhs)
-  Form <- Formula(form)
-
-  ## workaround to keep "|" from being interpreted as logical OR
-  ## and to keep lhs from being collapsed into a single variable
-  if(length(attr(Form, "lhs")) > 1 | length(attr(Form, "rhs")) > 1 |
-    any(sapply(attr(Form, "lhs"), length) > 1))
-  {
-    form <- if(length(attr(Form, "lhs")) > 1 | any(sapply(attr(Form, "lhs"), length) > 1))
-      paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")
-    else
-      paste_formula(attr(Form, "lhs"), attr(Form, "rhs"), rsep = "+")
-  }
-
+  form <- simplify_to_formula(x, lhs = lhs, rhs = rhs)
   terms(form, ...)
 }
 
 model.frame.Formula <- function(formula, data = NULL, ...,
   lhs = NULL, rhs = NULL)
 {
-  form <- formula(formula, lhs = lhs, rhs = rhs)
-  Form <- Formula(form)
-
-  ## workaround to keep "|" from being interpreted as logical OR
-  ## and to keep lhs from being collapsed into a single variable
-  if(length(attr(Form, "lhs")) > 1 | length(attr(Form, "rhs")) > 1 |
-    any(sapply(attr(Form, "lhs"), length) > 1))
-  {
-    form <- if(length(attr(Form, "lhs")) > 1 | any(sapply(attr(Form, "lhs"), length) > 1))
-      paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")
-    else
-      paste_formula(attr(Form, "lhs"), attr(Form, "rhs"), rsep = "+")
-  }
-
+  form <- simplify_to_formula(formula, lhs = lhs, rhs = rhs)
   model.frame(form, data = data, ...)
 }
 
@@ -251,3 +225,41 @@ paste_formula <- function(lhs, rhs, lsep = "|", rsep = "|") {
 
   c_formula(lval, rval, sep = "~")
 }
+
+## simplify a Formula to a formula that can be processed with terms/model.frame etc.
+simplify_to_formula <- function(Formula, lhs = NULL, rhs = NULL) {
+
+  ## get desired subset as formula and Formula
+  form <- formula(Formula, lhs = lhs, rhs = rhs)
+  Form <- Formula(form)
+
+  ## convenience functions for checking extended features
+  is_lhs_extended <- function(Formula) {
+    ## check for multiple parts
+    if(length(attr(Formula, "lhs")) > 1) {
+      return(TRUE)
+    } else {
+    ## and multiple responses
+      if(length(attr(Formula, "lhs")) < 1) return(FALSE)
+      return(length(attr(terms(paste_formula(NULL, attr(Formula, "lhs"), rsep = "+")), "term.labels")) > 1)
+    }
+  }
+
+  is_rhs_extended <- function(Formula) {
+    ## check for muliple parts
+    length(attr(Formula, "rhs")) > 1
+  }
+
+  ## simplify (if necessary)
+  ext_lhs <- is_lhs_extended(Form)
+  if(ext_lhs | is_rhs_extended(Form)) {
+    form <- if(ext_lhs) {
+      paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")    
+    } else {
+      paste_formula(attr(Form, "lhs"), attr(Form, "rhs"), rsep = "+")    
+    }
+  }
+  
+  return(form)
+}
+

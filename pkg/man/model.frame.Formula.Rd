@@ -56,16 +56,16 @@
 \examples{
 ## artificial example data
 set.seed(1071)
-dat <- as.data.frame(matrix(round(rnorm(21), digits = 2), ncol = 7))
+dat <- as.data.frame(matrix(round(runif(21), digits = 2), ncol = 7))
 colnames(dat) <- c("y1", "y2", "y3", "x1", "x2", "x3", "x4")
-for(i in 6:7) dat[[i]] <- factor(dat[[i]] > 0, labels = c("a", "b"))
+for(i in 6:7) dat[[i]] <- factor(dat[[i]] > 0.5, labels = c("a", "b"))
 
 ######################################
 ## single response and two-part RHS ##
 ######################################
 
 ## single response with two-part RHS
-F1 <- Formula(y1 ~ x1 + x2 | log(x1))
+F1 <- Formula(log(y1) ~ x1 + x2 | I(x1^2))
 length(F1)
 
 ## set up model frame
