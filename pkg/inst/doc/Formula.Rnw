@@ -1,0 +1,67 @@
+\documentclass[codesnippet,nojss]{jss}
+\usepackage{thumbpdf}
+%% need no \usepackage{Sweave}
+
+%% additional commands
+\newcommand{\squote}[1]{`{#1}'}
+\newcommand{\dquote}[1]{``{#1}''}
+\newcommand{\fct}[1]{{\texttt{#1()}\index{#1@\texttt{#1()}}}}
+\newcommand{\class}[1]{\dquote{\texttt{#1}}}
+
+\author{Yves Croissant\\Universit\'e Lumi\`ere Lyon 2
+   \And Achim Zeileis\\WU Wirtschaftsuniversit\"at Wien}
+\Plainauthor{Yves Croissant, Achim Zeileis}
+
+\title{Extended Model Formulas in \proglang{R}: Multiple Parts and Multiple Responses}
+\Plaintitle{Extended Model Formulas in R: Multiple Parts and Multiple Responses}
+\Shorttitle{Extended Model Formulas in \proglang{R}}
+
+\Keywords{formula processing, model frame, model matrix, \proglang{R}}
+\Plainkeywords{formula processing, model frame, model matrix, R}
+
+\Abstract{ 
+  extended formula process
+  
+  multiple parts (e.g., regressors and instruments)
+  
+  multiple responses (of different types)
+}
+
+\Address{
+  Yves Croissant\\
+  LET-ISH\\
+  Avenue Berthelot\\
+  F-69363 Lyon cedex 07, France\\
+  E-mail: \email{yves.croissant@let.ish-lyon.cnrs.fr}\\
+
+  Achim Zeileis\\
+  Department of Statistics and Mathematics\\
+  WU Wirtschaftsuniversit\"at Wien\\
+  Augasse 2--6\\
+  A-1090 Wien, Austria\\
+  E-mail: \email{Achim.Zeileis@R-project.org}\\
+  URL: \url{http://statmath.wu-wien.ac.at/~zeileis/}
+}
+
+\begin{document}
+
+\SweaveOpts{engine = R, eps = FALSE, keep.source = TRUE}
+%\VignetteIndexEntry{Extended Model Formulas in R: Multiple Parts and Multiple Responses}
+%\VignetteDepends{stats}
+%\VignetteKeywords{formula processing, model frame, model matrix, R}
+%\VignettePackage{Formula}
+
+<<preliminaries, echo=FALSE, results=hide>>=
+options(width = 70, prompt = "R> ", continue = "+  ")
+library("exams")
+@
+
+\section{Introduction} \label{sec:intro}
+
+explain ideas and cite examples
+
+\nocite{*}
+
+\bibliography{Formula}
+
+\end{document}
