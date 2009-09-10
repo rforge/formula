@@ -55,10 +55,10 @@
 
 \examples{
 ## artificial example data
-set.seed(1071)
+set.seed(1090)
 dat <- as.data.frame(matrix(round(runif(21), digits = 2), ncol = 7))
 colnames(dat) <- c("y1", "y2", "y3", "x1", "x2", "x3", "x4")
-for(i in 6:7) dat[[i]] <- factor(dat[[i]] > 0.5, labels = c("a", "b"))
+for(i in c(2, 6:7)) dat[[i]] <- factor(dat[[i]] > 0.5, labels = c("a", "b"))
 
 ######################################
 ## single response and two-part RHS ##

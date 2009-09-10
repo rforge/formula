@@ -78,7 +78,8 @@ model.matrix.Formula <- function(object, data = environment(object), ...,
   lhs = NULL, rhs = 1)
 {
   form <- formula(object, lhs = lhs, rhs = rhs, collapse = c(FALSE, TRUE))
-  model.matrix(form, data = data, ...)
+  mt <- delete.response(terms(form, data = data))
+  model.matrix(mt, data = data, ...)
 }
 
 update.Formula <- function(object, new,...) {
