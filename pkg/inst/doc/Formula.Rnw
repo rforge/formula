@@ -160,8 +160,8 @@ For constructing separate model matrices for the two parts on the RHS, the
 \code{rhs}:
 %
 <<multi-part4>>=
-model.matrix(F1, data = dat, rhs = 1)
-model.matrix(F1, data = dat, rhs = 2)
+model.matrix(F1, data = mf1, rhs = 1)
+model.matrix(F1, data = mf1, rhs = 2)
 @
 
 
@@ -204,16 +204,19 @@ all RHS parts \code{rhs} is set to \code{0} while all LHS parts are
 included (by default):
 %
 <<multi-response4>>=
-model.frame(F2, data = dat, rhs = 0)
+Model.Response(F2, data = mf2)
 @
 %
 More details on the \code{lhs} and \code{rhs} arguments will be discussed
 in the next section. Finally, the model matrix can be derived as usual:
 %
 <<multi-response5>>=
-model.matrix(F2, data = dat)
+model.matrix(F2, data = mf2)
 @
 
+<<>>=
+Model.Response(F1, data = mf1)
+@
 
 \section{Implementation} \label{sec:implementation}
 
@@ -224,7 +227,7 @@ model.matrix(F2, data = dat)
 \code{+}, \code{-}, \code{*}, \code{/}, \code{:}, \verb+%in%+, \verb+^+
 
 <<details1>>=
-F3 <- Formula(y1 + y2 | y3 ~ x1 + I(x2^2) | 0 + log(x1) | x3 / x4)
+F3 <- Formula(y1 + y2 | log(y3) ~ x1 + I(x2^2) | 0 + log(x1) | x3 / x4)
 F3
 length(F3)
 attr(F3, "lhs")
@@ -261,8 +264,8 @@ model.matrix(terms(F3, lhs = 0, rhs = 2), data = mf3)
 @
 
 <<model.response-substitute>>=
-model.frame(terms(F3, lhs = 1, rhs = 0), data = mf3)
-model.frame(terms(F3, lhs = 2, rhs = 0), data = mf3)
+Model.Response(F3, data = mf3, lhs = 1)
+Model.Response(F3, data = mf3, lhs = 2)
 @
 
 <<model.foo-methods>>=
@@ -282,9 +285,45 @@ as.Formula(y1 ~ x1, y2 ~ x2, ~ x3)
 @
 
 
-\section{Summary} \label{sec:summary}
+\section{Usage in Model Fitting Functions} \label{sec:usage}
 
-\nocite{*}
+(1)~process the call (could include weights and offset)
+
+(2)~set up the model frame (using the \class{Formula} method)
+
+(3)~extract (univariate) response and regressors
+
+(4)~call \fct{lm.fit} twice to compute two-stage least squares estimator
+and extract coefficients
+
+<<ivcoef>>=
+ivcoef <- function(formula, data, subset, na.action, ...)
+{
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset", "na.action"), names(mf), 0)
+  mf <- mf[c(1, m)]
+  
+  mf[[1]] <- as.name("model.frame")
+  mf[[2]] <- as.call(list(as.name("Formula"), mf[[2]]))
+  mf <- eval(mf, parent.frame())
+  
+  f <- Formula(formula)
+  Y <- Model.Response(f, data = mf, lhs = 1)
+  X <- model.matrix(f, data = mf, rhs = 1)
+  Z <- model.matrix(f, data = mf, rhs = 2)
+
+  XZ <- as.matrix(lm.fit(Z, X)$fitted.values)
+  lm.fit(XZ, Y)$coefficients
+}
+@
+
+<<ivcoef-example>>=
+ivcoef(log(y1) ~ x1 | x2, data = dat)
+@
+
+Function \fct{ivreg} with inference in \pkg{AER} \citep{AER:Kleiber+Zeileis:2008}
+
+\section{Summary} \label{sec:summary}
 
 \bibliography{Formula}
 

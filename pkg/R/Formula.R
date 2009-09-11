@@ -82,6 +82,23 @@ model.matrix.Formula <- function(object, data = environment(object), ...,
   model.matrix(mt, data = data, ...)
 }
 
+## as model.response() is not generic, we do this:
+Model.Response <- function(formula, data, lhs = NULL, ...) {
+  if(!is.Formula(formula)) formula <- Formula(formula)
+  mt <- terms(formula, lhs = lhs, rhs = 0)
+  ix <- if(attr(mt, "response") == 0L) attr(mt, "term.labels")
+    else deparse(attr(mt, "variables")[[2]])
+  if(!all(ix %in% names(data))) stop(
+    paste("'data' does not seem to be an appropriate 'model.frame':",
+    paste(paste("'", ix[!(ix %in% names(data))], "'", sep = ""), collapse = ", "),
+    "not found")
+  )
+  rval <- data[,ix]
+  if(NCOL(rval) == 1L) names(rval) <- rownames(data)
+  return(rval)
+}
+
+
 update.Formula <- function(object, new,...) {
 
   new <- Formula(new)

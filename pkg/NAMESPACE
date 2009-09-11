@@ -2,6 +2,7 @@ export(
   "Formula",
   "as.Formula",
   "is.Formula",
+  "Model.Response",
   "has.intercept"
 )
 
