@@ -24,3 +24,6 @@ S3method("as.Formula", "Formula")
 S3method("has.intercept", "default")
 S3method("has.intercept", "formula")
 S3method("has.intercept", "Formula")
+
+## methods to Model.Response()
+S3method("Model.Response", "formula")

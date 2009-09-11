@@ -83,7 +83,10 @@ model.matrix.Formula <- function(object, data = environment(object), ...,
 }
 
 ## as model.response() is not generic, we do this:
-Model.Response <- function(formula, data, lhs = NULL, ...) {
+Model.Response <- function(formula, data, ...)
+  UseMethod("Model.Response")
+
+Model.Response.formula <- function(formula, data, lhs = NULL, ...) {
   if(!is.Formula(formula)) formula <- Formula(formula)
   mt <- terms(formula, lhs = lhs, rhs = 0)
   ix <- if(attr(mt, "response") == 0L) attr(mt, "term.labels")

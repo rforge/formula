@@ -4,6 +4,7 @@
 \alias{model.matrix.Formula}
 \alias{model.frame.Formula}
 \alias{Model.Response}
+\alias{Model.Response.formula}
 
 \title{Model Frame/Matrix/Response Construction for Extended Formulas}
 
@@ -19,7 +20,9 @@
   lhs = NULL, rhs = 1)
 \method{terms}{Formula}(x, \dots,
   lhs = NULL, rhs = NULL)
-Model.Response(formula, data, lhs = NULL, \dots)
+
+Model.Response(formula, data, \dots)
+\method{Model.Response}{formula}(formula, data, lhs = NULL, \dots)
 }
 
 \arguments{
@@ -49,9 +52,11 @@ Model.Response(formula, data, lhs = NULL, \dots)
   Otherwise all parts of the formula are collapsed on the RHS (because \code{formula}
   objects can not have multiple responses). Hence, for multi-response \code{Formula}
   objects, the (non-generic) \code{\link[stats:model.extract]{model.response}} does
-  not give the correct results. To avoid confusion \code{Model.Response} can always
+  not give the correct results. To avoid confusion a new generic \code{Model.Response} 
+  with suitable \code{formula} method is provided which can always
   be used instead of \code{model.response}. Note, however, that it has a different
-  syntax: It requires the \code{Formula} object in addition to the \code{model.frame}
+  syntax: It requires the \code{Formula} object in addition to the readily
+  processed \code{model.frame} supplied in data
   (and optionally the \code{lhs}). Also, it returns either a \code{data.frame} with
   multiple columns or a single column (dropping the \code{data.frame} property)
   depending on wether multiple responses are employed or not.
