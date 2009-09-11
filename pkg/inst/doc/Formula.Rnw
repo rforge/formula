@@ -323,6 +323,16 @@ ivcoef(log(y1) ~ x1 | x2, data = dat)
 
 Function \fct{ivreg} with inference in \pkg{AER} \citep{AER:Kleiber+Zeileis:2008}
 
+\code{formula = y ~ x}, \code{instruments = ~ z} can simply do
+
+\begin{Code}
+formula <- if(!is.null(instruments)) as.Formula(formula, instruments)
+  else as.Formula(formula)
+stopifnot(isTRUE(all.equal(length(formula), c(1, 2))))
+\end{Code}
+
+
+
 \section{Summary} \label{sec:summary}
 
 \bibliography{Formula}
