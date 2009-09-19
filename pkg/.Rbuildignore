@@ -1,1 +1,2 @@
-inst/doc
+R/has.intercept.R
+man/has.intercept.Rd

@@ -21,6 +21,10 @@ Changes in Version 0.2-0
     and have been deprecated. Use the streamlined lhs/rhs arguments
     instead.
 
+  o vignette("Formula", package = "Formula") illustrates usage of
+    the tools provided by the package and explains the ideas underlying
+    its implementation.
+
 
 Changes in Version 0.1-3
 

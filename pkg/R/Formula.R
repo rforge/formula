@@ -45,7 +45,7 @@ is.Formula <- function(object)
 formula.Formula <- function(x, lhs = NULL, rhs = NULL, collapse = FALSE,
   drop = TRUE, ...)
 {
-  ## default: keep all parts (NOTE: changed from previous version!)
+  ## default: keep all parts
   if(is.null(lhs)) lhs <- 1:length(attr(x, "lhs"))
   if(is.null(rhs)) rhs <- 1:length(attr(x, "rhs"))
 
@@ -63,6 +63,47 @@ formula.Formula <- function(x, lhs = NULL, rhs = NULL, collapse = FALSE,
 }
 
 terms.Formula <- function(x, ..., lhs = NULL, rhs = NULL) {
+
+  ## simplify a Formula to a formula that can be processed with
+  ## terms/model.frame etc.
+  simplify_to_formula <- function(Formula, lhs = NULL, rhs = NULL) {
+
+    ## get desired subset as formula and Formula
+    form <- formula(Formula, lhs = lhs, rhs = rhs)
+    Form <- Formula(form)
+
+    ## convenience functions for checking extended features
+    is_lhs_extended <- function(Formula) {
+      ## check for multiple parts
+      if(length(attr(Formula, "lhs")) > 1) {
+        return(TRUE)
+      } else {
+      ## and multiple responses
+        if(length(attr(Formula, "lhs")) < 1) return(FALSE)
+        return(length(attr(terms(paste_formula(NULL,
+	  attr(Formula, "lhs"), rsep = "+")), "term.labels")) > 1)
+      }
+    }
+
+    is_rhs_extended <- function(Formula) {
+      ## check for muliple parts
+      length(attr(Formula, "rhs")) > 1
+    }
+
+    ## simplify (if necessary)
+    ext_lhs <- is_lhs_extended(Form)
+    if(ext_lhs | is_rhs_extended(Form)) {
+      form <- if(ext_lhs) {
+        paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")    
+      } else {
+        paste_formula(attr(Form, "lhs"), attr(Form, "rhs"), rsep = "+")    
+      }
+    }
+  
+    return(form)
+  }
+
+  ## simplify and then call traditional terms()
   form <- simplify_to_formula(x, lhs = lhs, rhs = rhs)
   terms(form, ...)
 }
@@ -70,8 +111,7 @@ terms.Formula <- function(x, ..., lhs = NULL, rhs = NULL) {
 model.frame.Formula <- function(formula, data = NULL, ...,
   lhs = NULL, rhs = NULL)
 {
-  form <- simplify_to_formula(formula, lhs = lhs, rhs = rhs)
-  model.frame(form, data = data, ...)
+  model.frame(terms(formula, lhs = lhs, rhs = rhs), data = data, ...)
 }
 
 model.matrix.Formula <- function(object, data = environment(object), ...,
@@ -83,24 +123,38 @@ model.matrix.Formula <- function(object, data = environment(object), ...,
 }
 
 ## as model.response() is not generic, we do this:
-Model.Response <- function(formula, data, ...)
-  UseMethod("Model.Response")
+model.part <- function(object, ...)
+  UseMethod("model.part")
 
-Model.Response.formula <- function(formula, data, lhs = NULL, ...) {
-  if(!is.Formula(formula)) formula <- Formula(formula)
-  mt <- terms(formula, lhs = lhs, rhs = 0)
-  ix <- if(attr(mt, "response") == 0L) attr(mt, "term.labels")
-    else deparse(attr(mt, "variables")[[2]])
+model.part.formula <- function(formula, data, ..., drop = FALSE) {
+  formula <- Formula(formula)
+  NextMethod()
+}
+
+model.part.Formula <- function(object, data, lhs = 0, rhs = 0, drop = FALSE, ...) {
+
+  ## *hs = NULL: keep all parts
+  if(is.null(lhs)) lhs <- 1:length(attr(object, "lhs"))
+  if(is.null(rhs)) rhs <- 1:length(attr(object, "rhs"))
+
+  if(isTRUE(all.equal(as.numeric(lhs), rep(0, length(lhs)))) &
+     isTRUE(all.equal(as.numeric(rhs), rep(0, length(rhs)))))
+    stop("Either some 'lhs' or 'rhs' has to be selected.")
+
+  ## construct auxiliary terms object
+  mt <- terms(object, lhs = lhs, rhs = rhs, data = data)
+
+  ## subset model frame
+  ix <- sapply(attr(mt, "variables")[-1], deparse)
   if(!all(ix %in% names(data))) stop(
     paste("'data' does not seem to be an appropriate 'model.frame':",
     paste(paste("'", ix[!(ix %in% names(data))], "'", sep = ""), collapse = ", "),
     "not found")
   )
-  rval <- data[,ix]
-  if(NCOL(rval) == 1L) names(rval) <- rownames(data)
+  rval <- data[, ix, drop = drop]
+  if(!is.data.frame(rval)) names(rval) <- rownames(data)
   return(rval)
 }
-
 
 update.Formula <- function(object, new,...) {
 
@@ -146,25 +200,6 @@ update.Formula <- function(object, new,...) {
 length.Formula <- function(x) {
   ## NOTE: return length of both sides, not only rhs
   c(length(attr(x, "lhs")), length(attr(x, "rhs")))
-}
-
-has.intercept <- function(object, ...) {
-  UseMethod("has.intercept")
-}
-
-has.intercept.default <- function(object, ...) {
-  has.intercept(formula(object), ...)
-}
-
-has.intercept.formula <- function(object, ...) {
-  attr(terms(object), "intercept") == 1L
-}
-
-has.intercept.Formula <- function(object, rhs = NULL, ...) {
-  ## NOTE: return a logical vector of the necessary length
-  ## (which might be > 1)
-  if(is.null(rhs)) rhs <- 1:length(attr(object, "rhs"))
-  sapply(rhs, function(x) has.intercept(formula(object, lhs = 0, rhs = x)))
 }
 
 print.Formula <- function(x, ...) {
@@ -245,42 +280,5 @@ paste_formula <- function(lhs, rhs, lsep = "|", rsep = "|") {
   }
 
   c_formula(lval, rval, sep = "~")
-}
-
-## simplify a Formula to a formula that can be processed with terms/model.frame etc.
-simplify_to_formula <- function(Formula, lhs = NULL, rhs = NULL) {
-
-  ## get desired subset as formula and Formula
-  form <- formula(Formula, lhs = lhs, rhs = rhs)
-  Form <- Formula(form)
-
-  ## convenience functions for checking extended features
-  is_lhs_extended <- function(Formula) {
-    ## check for multiple parts
-    if(length(attr(Formula, "lhs")) > 1) {
-      return(TRUE)
-    } else {
-    ## and multiple responses
-      if(length(attr(Formula, "lhs")) < 1) return(FALSE)
-      return(length(attr(terms(paste_formula(NULL, attr(Formula, "lhs"), rsep = "+")), "term.labels")) > 1)
-    }
-  }
-
-  is_rhs_extended <- function(Formula) {
-    ## check for muliple parts
-    length(attr(Formula, "rhs")) > 1
-  }
-
-  ## simplify (if necessary)
-  ext_lhs <- is_lhs_extended(Form)
-  if(ext_lhs | is_rhs_extended(Form)) {
-    form <- if(ext_lhs) {
-      paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")    
-    } else {
-      paste_formula(attr(Form, "lhs"), attr(Form, "rhs"), rsep = "+")    
-    }
-  }
-  
-  return(form)
 }
 

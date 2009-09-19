@@ -2,8 +2,8 @@ export(
   "Formula",
   "as.Formula",
   "is.Formula",
-  "Model.Response",
-  "has.intercept"
+  "model.part"
+##  "has.intercept"
 )
 
 ## methods for class "Formula"
@@ -20,10 +20,11 @@ S3method("as.Formula", "default")
 S3method("as.Formula", "formula")
 S3method("as.Formula", "Formula")
 
-## methods to has.intercept()
-S3method("has.intercept", "default")
-S3method("has.intercept", "formula")
-S3method("has.intercept", "Formula")
+## ## methods to has.intercept()
+## S3method("has.intercept", "default")
+## S3method("has.intercept", "formula")
+## S3method("has.intercept", "Formula")
 
-## methods to Model.Response()
-S3method("Model.Response", "formula")
+## methods to model.part()
+S3method("model.part", "formula")
+S3method("model.part", "Formula")

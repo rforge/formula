@@ -3,8 +3,9 @@
 \alias{terms.Formula}
 \alias{model.matrix.Formula}
 \alias{model.frame.Formula}
-\alias{Model.Response}
-\alias{Model.Response.formula}
+\alias{model.part}
+\alias{model.part.formula}
+\alias{model.part.Formula}
 
 \title{Model Frame/Matrix/Response Construction for Extended Formulas}
 
@@ -21,24 +22,28 @@
 \method{terms}{Formula}(x, \dots,
   lhs = NULL, rhs = NULL)
 
-Model.Response(formula, data, \dots)
-\method{Model.Response}{formula}(formula, data, lhs = NULL, \dots)
+model.part(object, \dots)
+\method{model.part}{Formula}(object, data, lhs = 0, rhs = 0,
+  drop = FALSE, \dots)
 }
 
 \arguments{
   \item{formula, object, x}{an object of class \code{Formula}.}
   \item{data}{a data.frame, list or environment containing the variables in
-    \code{formula}. For \code{Model.Response} it needs to be the \code{model.frame}.}
+    \code{formula}. For \code{model.part} it needs to be the \code{model.frame}.}
   \item{lhs, rhs}{indexes specifying which elements of the left- and
     right-hand side, respectively, should be employed. \code{NULL}
-    corresponds to all parts, \code{0} to none.}
+    corresponds to all parts, \code{0} to none. At least one \code{lhs} or
+    one \code{rhs} has to be specified.}
+  \item{drop}{logical. Should the \code{data.frame} be dropped for single
+    column data frames?}
   \item{\dots}{further arguments passed to the respective
     \code{formula} methods.}
 }
 
 \details{
   All three model computations leverage the corresponding standard methods.
-  Additionally, they allow specification of the part(s) of the left- and righ-hand side
+  Additionally, they allow specification of the part(s) of the left- and right-hand side
   (LHS and RHS) that should be included in the computation.
 
   The idea underlying all three model computations is to extract a suitable
@@ -52,14 +57,14 @@ Model.Response(formula, data, \dots)
   Otherwise all parts of the formula are collapsed on the RHS (because \code{formula}
   objects can not have multiple responses). Hence, for multi-response \code{Formula}
   objects, the (non-generic) \code{\link[stats:model.extract]{model.response}} does
-  not give the correct results. To avoid confusion a new generic \code{Model.Response} 
+  not give the correct results. To avoid confusion a new generic \code{model.part} 
   with suitable \code{formula} method is provided which can always
   be used instead of \code{model.response}. Note, however, that it has a different
   syntax: It requires the \code{Formula} object in addition to the readily
   processed \code{model.frame} supplied in data
   (and optionally the \code{lhs}). Also, it returns either a \code{data.frame} with
   multiple columns or a single column (dropping the \code{data.frame} property)
-  depending on wether multiple responses are employed or not.
+  depending on whether multiple responses are employed or not.
 }
 
 \seealso{\code{\link{Formula}},  \code{\link[stats]{model.frame}},
@@ -86,7 +91,7 @@ mf1 <- model.frame(F1, data = dat)
 mf1
 
 ## extract single response
-Model.Response(F1, data = mf1)
+model.part(F1, data = mf1, lhs = 1, drop = TRUE)
 model.response(mf1)
 ## model.response() works as usual
 
@@ -107,8 +112,8 @@ mf2 <- model.frame(F2, data = dat)
 mf2
 
 ## extract responses
-Model.Response(F2, data = mf2, lhs = 1)
-Model.Response(F2, data = mf2, lhs = 2)
+model.part(F2, data = mf2, lhs = 1)
+model.part(F2, data = mf2, lhs = 2)
 ## model.response(mf2) does not give correct results!
 
 ## extract model matrices
