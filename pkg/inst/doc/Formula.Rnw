@@ -176,7 +176,7 @@ model.matrix(F1, data = mf1, rhs = 2)
 
 \subsection{Multiple responses}
 
-To accomodate multiple responses, all formula operators can be employed
+To accommodate multiple responses, all formula operators can be employed
 on the LHS in \class{Formula} objects (whereas they would have their original
 arithmetic meaning in \class{formula} objects). This also includes the 
 new \code{|} operator for separating different parts. Thus, one could
