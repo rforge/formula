@@ -45,9 +45,23 @@ is.Formula <- function(object)
 formula.Formula <- function(x, lhs = NULL, rhs = NULL, collapse = FALSE,
   drop = TRUE, ...)
 {
+  ## available parts
+  lpart <- 1:length(attr(x, "lhs"))
+  rpart <- 1:length(attr(x, "rhs"))
+
   ## default: keep all parts
-  if(is.null(lhs)) lhs <- 1:length(attr(x, "lhs"))
-  if(is.null(rhs)) rhs <- 1:length(attr(x, "rhs"))
+  lhs <- if(is.null(lhs)) lpart else lpart[lhs]
+  rhs <- if(is.null(rhs)) rpart else rpart[rhs]
+  if(any(is.na(lhs))) {
+    lhs <- as.vector(na.omit(lhs))
+    if(length(lhs) < 1) lhs <- 0
+    warning("subscript out of bounds, not all 'lhs' available")
+  }
+  if(any(is.na(rhs))) {
+    rhs <- as.vector(na.omit(rhs))
+    if(length(rhs) < 1) rhs <- 0
+    warning("subscript out of bounds, not all 'rhs' available")
+  }  
 
   ## collapse: keep parts separated by "|" or collapse with "+"
   collapse <- rep(as.logical(collapse), length.out = 2)
@@ -94,7 +108,11 @@ terms.Formula <- function(x, ..., lhs = NULL, rhs = NULL) {
     ext_lhs <- is_lhs_extended(Form)
     if(ext_lhs | is_rhs_extended(Form)) {
       form <- if(ext_lhs) {
-        paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")    
+        if(length(attr(Form, "rhs")) == 1 & identical(attr(Form, "rhs")[[1]], 0L)) {
+          paste_formula(NULL, attr(Form, "lhs"), rsep = "+")    
+        } else {
+	  paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")
+	}
       } else {
         paste_formula(attr(Form, "lhs"), attr(Form, "rhs"), rsep = "+")    
       }
@@ -145,12 +163,17 @@ model.part.Formula <- function(object, data, lhs = 0, rhs = 0, drop = FALSE, ...
   mt <- terms(object, lhs = lhs, rhs = rhs, data = data)
 
   ## subset model frame
-  ix <- sapply(attr(mt, "variables")[-1], deparse)
-  if(!all(ix %in% names(data))) stop(
-    paste("'data' does not seem to be an appropriate 'model.frame':",
-    paste(paste("'", ix[!(ix %in% names(data))], "'", sep = ""), collapse = ", "),
-    "not found")
-  )
+  ix <- attr(mt, "variables")[-1]
+  if(is.null(ix)) {
+    ix <- 0
+  } else {
+    ix <- sapply(ix, deparse)
+    if(!all(ix %in% names(data))) stop(
+      paste("'data' does not seem to be an appropriate 'model.frame':",
+      paste(paste("'", ix[!(ix %in% names(data))], "'", sep = ""), collapse = ", "),
+      "not found")
+    )
+  }
   rval <- data[, ix, drop = drop]
   if(!is.data.frame(rval)) names(rval) <- rownames(data)
   return(rval)
@@ -274,7 +297,7 @@ paste_formula <- function(lhs, rhs, lsep = "|", rsep = "|") {
   if(length(lhs) > 1) {
     for(i in 2:length(lhs)) lval <- c_formula(lval, lhs[[i]], sep = lsep[[i-1]])
   }
-  rval <- if(length(rhs) > 0) rhs[[1]] else 0 ## FIXME: Is there something better?
+  rval <- if(length(rhs) > 0) rhs[[1]] else 0L ## FIXME: Is there something better?
   if(length(rhs) > 1) {
     for(i in 2:length(rhs)) rval <- c_formula(rval, rhs[[i]], sep = rsep[[i-1]])
   }

@@ -9,7 +9,7 @@
 \newcommand{\class}[1]{\dquote{\texttt{#1}}}
 
 \author{Achim Zeileis\\WU Wirtschaftsuniversit\"at Wien
-   \And Yves Croissant\\Universit\'e Lumi\`ere Lyon 2}
+   \And Yves Croissant\\Universit{\'e} de la R{\'e}union}
 \Plainauthor{Achim Zeileis, Yves Croissant}
 
 \title{Extended Model Formulas in \proglang{R}: Multiple Parts and Multiple Responses}
@@ -25,7 +25,7 @@
   useful in an extremely wide class of applications, they have certain limitations
   including being confined to single responses and not providing convenient support for
   processing formulas with multiple parts. The latter is relevant for models
-  with two or more sets of variable, e.g., regressors/intruments in instrumental
+  with two or more sets of variable, e.g., regressors/instruments in instrumental
   variable regressions, two-part models such as hurdle models, or 
   alternative-specific and individual-specific variables in choice models among many
   others.
@@ -46,9 +46,11 @@
   URL: \url{http://statmath.wu-wien.ac.at/~zeileis/}\\
 
   Yves Croissant\\
-  LET-ISH\\
-  Avenue Berthelot\\
-  69363 Lyon cedex 07, France\\
+  Universit{\'e} de la R{\'e}union\\
+  Facult{\'e} de Droit et d'Economie\\
+  15, avenue Ren{\'e} Cassin\\
+  BP7151\\
+  97715 Saint-Denis Messag Cedex 9, France\\
   E-mail: \email{yves.croissant@let.ish-lyon.cnrs.fr}\\
 }
 
@@ -212,7 +214,7 @@ be used to extract all variables from a model frame pertaining to specific parts
 This can also be used to extract multiple responses. Its syntax is modeled
 after \fct{model.matrix} taking a \class{Formula} as the first argument. For further
 details see Section~\ref{sec:implementation}. Its application is straightforward
-and all LHS variables can be extracted via
+and all LHS variables (in the first and only part of the LHS) can be extracted via
 %
 <<multi-response4>>=
 model.part(F2, data = mf2, lhs = 1)
@@ -242,7 +244,7 @@ the RHS, several operators can be used: \code{+}, \code{-}, \code{*},
 their original meaning in the top-level RHS while they keep their original
 arithmetic meaning on higher levels of the RHS (thus, within function
 calls such as \verb+I(x1^2)+) and on the LHS in general. A first step
-in using \class{formula} objects is oftern to compute the associated
+in using \class{formula} objects is often to compute the associated
 \class{terms} using the function \fct{terms}. Based on the formula or
 the associated terms and a suitable set of variables (typically either
 in a data frame or in the global environment) \fct{model.frame} can
@@ -252,7 +254,7 @@ is simply a \class{data.frame} with additional attributes (including \class{term
 but without a specific class. From this model frame several components can
 be extracted using \fct{model.extract} or \fct{model.response},
 \fct{model.weights}, and \fct{model.offset}, all of which are non-generic.
-Last not least, \fct{model.matrix} can compute ``design'' or ``regressor''
+Last not least, \fct{model.matrix} (which is generic) can compute ``design'' or ``regressor''
 matrices based on the formula/terms and the associated model frame.
 
 
@@ -443,16 +445,16 @@ ivcoef <- function(formula, data, subset, na.action, ...)
   mf$formula <- f
   mf <- eval(mf, parent.frame())
   
-  Y <- model.response(mf)
-  X <- model.matrix(f, data = mf, rhs = 1)
-  Z <- model.matrix(f, data = mf, rhs = 2)
+  y <- model.response(mf)
+  x <- model.matrix(f, data = mf, rhs = 1)
+  z <- model.matrix(f, data = mf, rhs = 2)
 
-  XZ <- as.matrix(lm.fit(Z, X)$fitted.values)
-  lm.fit(XZ, Y)$coefficients
+  xz <- as.matrix(lm.fit(z, x)$fitted.values)
+  lm.fit(xz, y)$coefficients
 }
 @
 %
-The resulting funtion can then be applied easily (albeit not very meaningfully)
+The resulting function can then be applied easily (albeit not very meaningfully)
 to the \code{dat} data frame:
 %
 <<ivcoef-example>>=
