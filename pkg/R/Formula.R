@@ -43,7 +43,7 @@ is.Formula <- function(object)
   inherits(object, "Formula")
 
 formula.Formula <- function(x, lhs = NULL, rhs = NULL, collapse = FALSE,
-  drop = TRUE, ...)
+  update = FALSE, drop = TRUE, ...)
 {
   ## available parts
   lpart <- 1:length(attr(x, "lhs"))
@@ -69,6 +69,9 @@ formula.Formula <- function(x, lhs = NULL, rhs = NULL, collapse = FALSE,
   rval <- paste_formula(attr(x, "lhs")[lhs], attr(x, "rhs")[rhs],
     lsep = ifelse(collapse[1], "+", "|"),
     rsep = ifelse(collapse[2], "+", "|"))
+
+  ## omit potentially redundant terms
+  if(all(collapse) & update) rval <- update(rval, if(length(rval) > 2) . ~ . else ~ .)
 
   ## reconvert to Formula if desired
   if(!drop) rval <- Formula(rval)
@@ -108,7 +111,7 @@ terms.Formula <- function(x, ..., lhs = NULL, rhs = NULL) {
     ext_lhs <- is_lhs_extended(Form)
     if(ext_lhs | is_rhs_extended(Form)) {
       form <- if(ext_lhs) {
-        if(length(attr(Form, "rhs")) == 1 & identical(attr(Form, "rhs")[[1]], 0L)) {
+        if(length(attr(Form, "rhs")) == 1 & identical(attr(Form, "rhs")[[1]], 0)) {
           paste_formula(NULL, attr(Form, "lhs"), rsep = "+")    
         } else {
 	  paste_formula(NULL, c(attr(Form, "lhs"), attr(Form, "rhs")), rsep = "+")
@@ -129,7 +132,7 @@ terms.Formula <- function(x, ..., lhs = NULL, rhs = NULL) {
 model.frame.Formula <- function(formula, data = NULL, ...,
   lhs = NULL, rhs = NULL)
 {
-  model.frame(terms(formula, lhs = lhs, rhs = rhs), data = data, ...)
+  model.frame(terms(formula, lhs = lhs, rhs = rhs, data = data), data = data, ...)
 }
 
 model.matrix.Formula <- function(object, data = environment(object), ...,
@@ -290,6 +293,9 @@ paste_formula <- function(lhs, rhs, lsep = "|", rsep = "|") {
   if(length(lhs) > 1) lsep <- rep(lsep, length.out = length(lhs) - 1)
   if(length(rhs) > 1) rsep <- rep(rsep, length.out = length(rhs) - 1)
 
+  if(is.null(lhs)) lhs <- list()
+  if(is.null(rhs)) rhs <- list()
+  
   if(!is.list(lhs)) lhs <- list(lhs)
   if(!is.list(rhs)) rhs <- list(rhs)
 
@@ -297,7 +303,7 @@ paste_formula <- function(lhs, rhs, lsep = "|", rsep = "|") {
   if(length(lhs) > 1) {
     for(i in 2:length(lhs)) lval <- c_formula(lval, lhs[[i]], sep = lsep[[i-1]])
   }
-  rval <- if(length(rhs) > 0) rhs[[1]] else 0L ## FIXME: Is there something better?
+  rval <- if(length(rhs) > 0) rhs[[1]] else 0 ## FIXME: Is there something better?
   if(length(rhs) > 1) {
     for(i in 2:length(rhs)) rval <- c_formula(rval, rhs[[i]], sep = rsep[[i-1]])
   }

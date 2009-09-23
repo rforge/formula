@@ -132,6 +132,7 @@ dat <- as.data.frame(matrix(round(runif(21), digits = 2), ncol = 7))
 colnames(dat) <- c("y1", "y2", "y3", "x1", "x2", "x3", "x4")
 for(i in c(2, 6:7)) dat[[i]] <- factor(dat[[i]] < 0.5,
   labels = c("a", "b"))
+dat$y2[1] <- NA
 dat
 @
 
@@ -248,10 +249,13 @@ in using \class{formula} objects is often to compute the associated
 \class{terms} using the function \fct{terms}. Based on the formula or
 the associated terms and a suitable set of variables (typically either
 in a data frame or in the global environment) \fct{model.frame} can
-build a so-called model frame that contains all variables in the formula/terms
-and potentially further variables like weights, offset, etc. A model frame
-is simply a \class{data.frame} with additional attributes (including \class{terms})
-but without a specific class. From this model frame several components can
+build a so-called model frame that contains all variables in the formula/terms.
+This might include processing of missing values (\code{NA}s),
+carrying out variable transformations (such as logs, squares,
+or other functions of one or more variables) and providing further variables
+like weights, offset, etc. A model frame is simply a \class{data.frame} with
+additional attributes (including \class{terms}) but without a specific class.
+From this preprocessed model frame several components can
 be extracted using \fct{model.extract} or \fct{model.response},
 \fct{model.weights}, and \fct{model.offset}, all of which are non-generic.
 Last not least, \fct{model.matrix} (which is generic) can compute ``design'' or ``regressor''
@@ -361,8 +365,9 @@ mf3 <- model.frame(F3, data = dat, subset = y1 < 0.75, weights = x1)
 mf3
 @
 %
-Based on this model frame the model matrices for each RHS part can be
-easily computed, again setting the \code{rhs} argument:
+All subsequent computations are then based on this preprocessed model
+frame (and possibly the original \class{Formula}). Thus, the model matrices
+for each RHS part can be easily computed, again setting the \code{rhs} argument:
 %
 <<model.matrix-method>>=
 model.matrix(F3, data = mf3, rhs = 2)
@@ -371,9 +376,9 @@ model.matrix(F3, data = mf3, rhs = 2)
 Typically, just a single RHS will be selected and hence \code{rhs = 1}
 and not \code{rhs = NULL} is the default in this method. However, multiple RHS parts
 are also supported. Also, there is a \code{lhs} argument available (defaulting to \code{NULL})
-which might seem unnecessary at first sight  but it is important
+which might seem unnecessary at first sight but it is important
 in case the selected RHS part(s) contain(s) a ``\code{.}'' that needs to
-be resolved.
+be resolved (see \code{?model.matrix.Formula} for an example).
 
 The LHS parts can be extracted using the method
 to the new \fct{model.part} generic, employing a syntax similar to \fct{model.matrix}:
@@ -427,11 +432,14 @@ The \fct{ivcoef} function below takes the usual arguments \code{formula},
 \code{weights} and \code{offset} could be included in the same way).
 The \code{formula} should be a two-part formula like \code{y ~ x1 + x2 | z1 + z2 + z3}.
 There is a single response on the LHS, one RHS part with the regressors and
-a second RHS part with the instruments. The function \fct{ivcoef} processes
-these arguments in the following four steps: (1)~process the call,
+a second RHS part with the instruments. The function \fct{ivcoef} uses the
+typical workflow of model-fitting functions and processes
+its arguments in the following four steps:
+(1)~process the call,
 (2)~set up the model frame (using the \class{Formula} method),
-(3)~extract response and regressors,
-(4)~call \fct{lm.fit} twice to compute the two-stage least squares coefficients.
+(3)~extract response and regressors from the model frame,
+(4)~estimate the model (by calling \fct{lm.fit} twice to compute the
+    two-stage least squares coefficients).
 %
 <<ivcoef>>=
 ivcoef <- function(formula, data, subset, na.action, ...)

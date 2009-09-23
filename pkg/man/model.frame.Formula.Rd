@@ -77,6 +77,8 @@ set.seed(1090)
 dat <- as.data.frame(matrix(round(runif(21), digits = 2), ncol = 7))
 colnames(dat) <- c("y1", "y2", "y3", "x1", "x2", "x3", "x4")
 for(i in c(2, 6:7)) dat[[i]] <- factor(dat[[i]] > 0.5, labels = c("a", "b"))
+dat$y2[1] <- NA
+dat
 
 ######################################
 ## single response and two-part RHS ##
@@ -120,6 +122,20 @@ model.part(F2, data = mf2, lhs = 2)
 model.matrix(F2, data = mf2, rhs = 1)
 model.matrix(F2, data = mf2, rhs = 2)
 model.matrix(F2, data = mf2, rhs = 3)
+
+##########
+## misc ##
+##########
+
+## Formulas with '.'
+F3 <- Formula(y1 | y2 ~ .)
+mf3 <- model.frame(F3, data = dat)
+## without y1 or y2
+model.matrix(F3, data = mf3)
+## without y1 but with y2
+model.matrix(F3, data = mf3, lhs = 1)
+## without y2 but with y1
+model.matrix(F3, data = mf3, lhs = 2)
 }
 
 \keyword{models}

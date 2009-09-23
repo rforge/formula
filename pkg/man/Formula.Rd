@@ -23,7 +23,7 @@
 Formula(object)
 
 \method{formula}{Formula}(x, lhs = NULL, rhs = NULL,
-  collapse = FALSE, drop = TRUE, \dots)
+  collapse = FALSE, update = FALSE, drop = TRUE, \dots)
 
 as.Formula(x, \dots)
 is.Formula(object)
@@ -40,6 +40,9 @@ is.Formula(object)
     by \code{+})? \code{collapse} can be a vector of length 2,
     corresponding for different handling of left- and right-hand side
     respectively.}
+  \item{update}{logical. Only used if \code{all(collapse)}. Should the
+    resulting formula be updated to remove possibly redundant terms
+    occuring in multiple terms?}
   \item{drop}{logical. Should the \code{Formula} class be dropped?
     If \code{TRUE} (the default) a \code{formula} is returned, if
     \code{FALSE} the corresponding \code{Formula} is returned.}
