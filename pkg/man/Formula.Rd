@@ -10,6 +10,7 @@
 \alias{print.Formula}
 \alias{update.Formula}
 \alias{length.Formula}
+\alias{all.equal.Formula}
 
 \title{Extended Formulas: Multiple Responses and Multiple Regressor Parts}
 
