@@ -43,7 +43,7 @@
   Augasse 2--6\\
   1090 Wien, Austria\\
   E-mail: \email{Achim.Zeileis@R-project.org}\\
-  URL: \url{http://statmath.wu-wien.ac.at/~zeileis/}\\
+  URL: \url{http://statmath.wu.ac.at/~zeileis/}\\
 
   Yves Croissant\\
   Universit{\'e} de la R{\'e}union\\
