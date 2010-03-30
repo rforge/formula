@@ -105,7 +105,7 @@ can be rather inconvenient in certain applications:
         separate sets of variables for mean and dispersion
         \citep[e.g., in the \pkg{betareg} package,][]{Formula:Cribari-Neto+Zeileis:2010},
         separate equations for location, scatter, and shape
-        \citep[e.g., in the \pkg{gamlss} package][]{Formula:Stasinopoulos+Rigby:2007},
+        \citep[e.g., in the \pkg{gamlss} package,][]{Formula:Stasinopoulos+Rigby:2007},
         regressors and instruments in instrumental variable regressions
         (e.g., in the \pkg{plm} package, \citealp{Formula:Croissant+Millo:2008},
 	or the \pkg{AER} package, \citealp{Formula:Kleiber+Zeileis:2008}),
@@ -135,7 +135,7 @@ In the remainder of this paper we discuss
 how multiple responses and multiple parts (both on the LHS and RHS) are enabled
 in the \pkg{Formula} package written in the \proglang{R} system for statistical
 computing \citep{Formula:R:2009} and available from the Comprehensive \proglang{R}
-Archive Network at \url{http://CRAN.R-project.org/package=Formula}. Built on top of
+Archive Network (CRAN) at \url{http://CRAN.R-project.org/package=Formula}. Built on top of
 basic \class{formula} objects, the \class{Formula} class just adds a thin additional layer
 which is based on a single additional operator, namely \code{|}, that can be used to separate different
 parts (or groups) of variables. \pkg{Formula} essentially just handles the different
@@ -143,8 +143,9 @@ formula parts and leverages the existing methods for \class{formula} objects for
 remaining operations.\footnote{Throughout the paper, no terminological distinction is made between
 classic \class{formula} objects as such and the way they are interpreted by
 standard processing tools (e.g., \fct{terms}, \fct{model.frame}, \fct{model.matrix}).
-The reason for this is that this reflects their use as described in \cite{Formula:Chambers+Hastie:1992}
-and generalizations would generally require extra effort from the user.}
+The reasons for this are twofold: First, it reflects their use as described in
+\cite{Formula:Chambers+Hastie:1992} and, second, generalizations generally require
+extra effort from the user.}
 In Section~\ref{sec:motivation} we show two small motivating
 examples that convey the main ideas implemented in the package and how easily they
 can be employed. The details of the \class{Formula} class and its associated methods
@@ -520,7 +521,9 @@ replacing \code{f <- Formula(formula)} by
 %
 In summary, the usage of \pkg{Formula} should reduce the overhead for the
 developers of model-fitting functions in \proglang{R} with multiple responses and/or multiple
-parts and make the resulting programs more intelligible.
+parts and make the resulting programs more intelligible. Further \proglang{R}
+packages employing the \class{Formula} approach can be obtained from CRAN,
+including \pkg{betareg}, \pkg{frontier}, \pkg{mlogit}, and \pkg{plm}.
 
 
 \section{Summary} \label{sec:summary}

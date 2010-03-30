@@ -1,7 +1,15 @@
-Changes in Version 0.2-1
+Changes in Version 1.0-0
 
-  o added an all.equal() method for "Formula" objects.
-  
+  o package now published in Journal of Statistical Software,
+    see http://www.jstatsoft.org/v34/iXYZ/
+    and citation("Formula") within R. 
+
+  o added an all.equal() method for "Formula" objects that produces
+    more intelligible output in case the result is not TRUE.
+
+  o fixed an error of the update() method for "Formula" objects
+    without LHS.
+
 
 Changes in Version 0.2-0
 
