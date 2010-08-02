@@ -5,7 +5,7 @@
 %% additional commands
 \newcommand{\squote}[1]{`{#1}'}
 \newcommand{\dquote}[1]{``{#1}''}
-\newcommand{\fct}[1]{{\texttt{#1()}\index{#1@\texttt{#1()}}}}
+\newcommand{\fct}[1]{{\texttt{#1()}}}
 \newcommand{\class}[1]{\dquote{\texttt{#1}}}
 %% for internal use
 \newcommand{\fixme}[1]{\emph{\marginpar{FIXME} (#1)}}
@@ -23,6 +23,10 @@
 \Plainkeywords{formula processing, model frame, model matrix, R}
 
 \Abstract{ 
+  This introduction to the \proglang{R} package \pkg{Formula} is a (slightly)
+  modified version of \cite{Formula:Zeileis+Croissant:2010}, published in the
+  \emph{Journal of Statistical Software}.
+
   Model formulas are the standard approach for specifying the variables
   in statistical models in the \proglang{S} language. Although being eminently
   useful in an extremely wide class of applications, they have certain limitations
@@ -87,7 +91,6 @@ that processes it. Typically, the standard formula processing approach would
 encompass extraction of the specified terms using \fct{terms}, preparation of a preprocessed
 data frame using \fct{model.frame}, and computation of a ``design'' or ``regressor''
 matrix using \fct{model.matrix}.
-
 However, there are certain limitations to these standard formula processing tools in \proglang{S} that
 can be rather inconvenient in certain applications:
 \begin{enumerate}
