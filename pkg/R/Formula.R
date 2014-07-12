@@ -266,6 +266,16 @@ all.equal.Formula <- function(target, current, ...) {
   if(is.null(rval)) TRUE else rval
 }
 
+str.Formula <- function(object, ...) {
+  le <- length(object)
+  ls <- ifelse(sum(le) > 1L, "s", "")
+  writeLines(c(
+    sprintf("'Formula' with %s left-hand and %s right-hand side%s: %s",
+      le[1L], le[2L], ls, format(object)),
+    sprintf("  ..- attr(*, \".Environment\")=%s", format(attr(object, ".Environment")))))
+  invisible()
+}
+
 ## convenience tools #################################################
 
 ## split formulas
