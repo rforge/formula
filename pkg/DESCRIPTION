@@ -1,6 +1,6 @@
 Package: Formula
-Version: 1.2-0
-Date: 2015-01-05
+Version: 1.2-1
+Date: 2015-04-07
 Title: Extended Model Formulas
 Description: Infrastructure for extended formulas with multiple parts on the
              right-hand side and/or multiple responses on the left-hand side.
