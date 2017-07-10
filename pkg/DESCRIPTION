@@ -1,9 +1,10 @@
 Package: Formula
-Version: 1.2-1
-Date: 2015-04-07
+Version: 1.2-2
+Date: 2017-07-11
 Title: Extended Model Formulas
 Description: Infrastructure for extended formulas with multiple parts on the
-             right-hand side and/or multiple responses on the left-hand side.
+             right-hand side and/or multiple responses on the left-hand side
+	     (see <DOI:10.18637/jss.v034.i01>).
 Authors@R: c(person(given = "Achim", family = "Zeileis", role = c("aut", "cre"), email = "Achim.Zeileis@R-project.org"),
              person(given = "Yves", family = "Croissant", role = "aut", email = "Yves.Croissant@univ-reunion.fr"))
 Depends: R (>= 2.0.0), stats
