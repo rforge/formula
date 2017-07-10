@@ -1,5 +1,7 @@
 Formula <- function(object) {
 
+  if(inherits(object, "Formula")) return(object)
+
   stopifnot(inherits(object, "formula"))
 
   object_split <- split_formula(object)
