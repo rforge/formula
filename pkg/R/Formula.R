@@ -134,8 +134,12 @@ model.frame.Formula <- function(formula, data = NULL, ..., lhs = NULL, rhs = NUL
 
 model.matrix.Formula <- function(object, data = environment(object), ..., lhs = NULL, rhs = 1, dot = "separate")
 {
-  form <- formula(object, lhs = lhs, rhs = rhs, collapse = c(FALSE, TRUE))
-  mt <- delete.response(terms(form, data = data, dot = dot))
+  if(dot == "separate") {
+    form <- formula(object, lhs = lhs, rhs = rhs, collapse = c(FALSE, TRUE))
+    mt <- delete.response(terms(form, data = data))
+  } else {
+    mt <- delete.response(terms(object, lhs = lhs, rhs = rhs, dot = dot))
+  }
   model.matrix(mt, data = data, ...)
 }
 
