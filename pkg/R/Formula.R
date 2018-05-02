@@ -190,7 +190,7 @@ model.part.Formula <- function(object, data, lhs = 0, rhs = 0, drop = FALSE, ter
   if(is.null(ix)) {
     ix <- 0
   } else {
-    ix <- sapply(ix, deparse)
+    ix <- sapply(ix, deparse, width.cutoff = 500L) ## for width beyond 500: paste(..., collapse = "") ?
     if(!all(ix %in% names(data))) stop(
       paste("'data' does not seem to be an appropriate 'model.frame':",
       paste(paste("'", ix[!(ix %in% names(data))], "'", sep = ""), collapse = ", "),
